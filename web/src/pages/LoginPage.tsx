@@ -174,15 +174,34 @@ function ResetCard({ onClose }: { onClose: () => void }) {
 
 function FeatureIcon({ name }: { name: (typeof features)[number]["icon"] }) {
   if (name === "code") {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 8-4 4 4 4M15 8l4 4-4 4M13 7l-2 10" /></svg>;
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7.5-4.5 4.5L8 16.5M16 7.5l4.5 4.5L16 16.5M13.2 5.5l-2.4 13" /></svg>;
   }
   if (name === "users") {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 19v-1a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v1M10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm11 7v-1a3 3 0 0 0-2.2-2.9M16 6.1a3 3 0 0 1 0 5.8" /></svg>;
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="8.2" r="2.7" />
+        <path d="M4.2 18.8v-.7A3.5 3.5 0 0 1 7.7 14.6h2.6a3.5 3.5 0 0 1 3.5 3.5v.7" />
+        <circle cx="16.2" cy="8.8" r="2.15" />
+        <path d="M16.4 14.8a3.2 3.2 0 0 1 3.2 2.7v1.3" />
+      </svg>
+    );
   }
   if (name === "history") {
-    return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></svg>;
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 8.1V12l2.4 2.2" />
+        <path d="M4.2 11.4a7.8 7.8 0 1 1 .7 3.5" />
+        <path d="M4.2 19.2V14.8h4.4" />
+      </svg>
+    );
   }
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-9.5A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5Z" /><path d="M14 3.5V8h4.5M8 13h8M8 17h5" /></svg>;
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3.2h6.8L19 8.4V20a1.3 1.3 0 0 1-1.3 1.3H7A1.3 1.3 0 0 1 5.7 20V4.5A1.3 1.3 0 0 1 7 3.2Z" />
+      <path d="M13.6 3.4V8.5H19" />
+      <path d="M9 13.4h6" />
+    </svg>
+  );
 }
 
 function UserIcon() {

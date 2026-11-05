@@ -20,7 +20,7 @@
   --code-bg: #0f141b;
   --sans: "Pretendard Variable", Pretendard, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: var(--side-width) minmax(0, 1fr);
   height: 100vh;
   background: var(--bg);
   color: var(--ink);
@@ -331,7 +331,6 @@
 .manual-box textarea { width: 100%; min-height: 160px; font-family: var(--mono); font-size: 14px; }
 
 @media (max-width: 1360px) {
-  .workspace-app { grid-template-columns: 260px minmax(0, 1fr); }
   .home-grid { grid-template-columns: minmax(0, 1fr) 320px; }
   .studio-work.is-json { grid-template-columns: minmax(0, 1fr) 320px; }
   .studio h1 { font-size: 28px; }

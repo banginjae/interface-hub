@@ -79,6 +79,7 @@ function UserMenu({ allow }: { allow: (event: { preventDefault: () => void }) =>
   }
 
   const roleText = auth.user.role === "MASTER" ? "MASTER" : "일반 사용자";
+  const email = auth.user.email?.trim();
   return (
     <div className="user-menu" ref={rootRef}>
       <button
@@ -87,11 +88,15 @@ function UserMenu({ allow }: { allow: (event: { preventDefault: () => void }) =>
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="account-menu"
+        title={email ? `${auth.user.name} (${email})` : auth.user.name}
         onClick={() => setOpen((current) => !current)}
       >
         <span className="profile-avatar" aria-hidden="true"><UserGlyph /></span>
         <span className="profile-text">
-          <strong>{auth.user.name}</strong>
+          <span className="profile-line">
+            <strong>{auth.user.name}</strong>
+            {email ? <span className="profile-email">({email})</span> : null}
+          </span>
           <small>{auth.user.employeeNo} · {roleText}</small>
         </span>
         <span className="profile-caret" aria-hidden="true">▾</span>
