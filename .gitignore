@@ -1,0 +1,36 @@
+# Secrets / local config
+config/config.yaml
+config/config.test.yaml
+
+# Local build / deploy artifacts
+build/
+deploy/
+log/
+
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Frontend
+web/node_modules/
+web/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+*.swp
+*.swo

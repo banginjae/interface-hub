@@ -1,0 +1,21 @@
+CREATE TABLE spec_items (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  document_id BIGINT UNSIGNED NOT NULL,
+  item_uid CHAR(36) NOT NULL COMMENT '서버가 만든 항목 식별자',
+  sort_order INT NOT NULL,
+  name VARCHAR(300) NOT NULL,
+  summary VARCHAR(500) NULL,
+  status VARCHAR(20) NOT NULL COMMENT 'ACTIVE 또는 DEPRECATED',
+  payload LONGTEXT NOT NULL COMMENT '종류별 구조화 JSON',
+  created_by BIGINT UNSIGNED NOT NULL,
+  updated_by BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_spec_items_uid (document_id, item_uid),
+  KEY idx_spec_items_order (document_id, sort_order),
+  CONSTRAINT fk_spec_items_document FOREIGN KEY (document_id) REFERENCES spec_documents (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_spec_items_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT fk_spec_items_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT chk_spec_items_status CHECK (status IN ('ACTIVE', 'DEPRECATED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='규격 항목';

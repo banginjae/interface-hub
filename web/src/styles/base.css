@@ -1,0 +1,32 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, p { margin-top: 0; }
+
+h1 { font-size: 1.35rem; letter-spacing: -0.02em; }
+h2 { font-size: 1.05rem; }
+h3 { font-size: 0.95rem; }
+
+a { color: var(--blue-700); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid var(--blue-600);
+  outline-offset: 2px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  padding: 0.05rem 0.35rem;
+  background: var(--blue-50);
+  border-radius: 4px;
+}

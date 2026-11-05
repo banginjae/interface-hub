@@ -1,0 +1,22 @@
+server:
+  port: 8090
+  public_url: ""
+
+database:
+  host: localhost
+  port: 3306
+  name: interface_hub
+  user: interface_hub
+  password: ""
+
+jwt:
+  secret: ""
+  expire_hours: 8
+
+smtp:
+  enabled: false
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  from_address: ""

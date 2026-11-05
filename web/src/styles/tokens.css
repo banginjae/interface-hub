@@ -1,0 +1,27 @@
+:root {
+  --navy-950: #0d1626;
+  --navy-900: #132033;
+  --navy-800: #1c2d48;
+  --blue-600: #1f5fbf;
+  --blue-700: #184e9e;
+  --blue-50: #eef4fc;
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --line: #e1e6ee;
+  --line-strong: #cfd6e1;
+  --text: #1b2430;
+  --muted: #5d6b7c;
+  --success: #0e7a45;
+  --success-bg: #e8f6ef;
+  --warning: #8a5a00;
+  --warning-bg: #fff6e5;
+  --danger: #b42318;
+  --danger-bg: #fdeceb;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --radius: 8px;
+  --sidebar: 240px;
+  --header: 60px;
+  --font: "Segoe UI", "Malgun Gothic", sans-serif;
+  --mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}

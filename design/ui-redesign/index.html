@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>Interface Hub 시안 — 규격 작업 공간</title>
+  <meta name="viewport" content="width=1280">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="studio.css?v=9">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="mark">IH</span><span><b>Interface Hub</b><span>포장 라인</span></span></div>
+      <div class="side-scroll" id="side-home">
+        <button class="nav-item" type="button" data-view="home" aria-current="true">개요</button>
+        <p class="side-label">규격</p>
+        <button class="nav-item" type="button" data-view="api">REST API <small>12</small></button>
+        <button class="nav-item" type="button" data-view="api">MQTT <small>4</small></button>
+        <button class="nav-item" type="button" data-view="api">WebSocket <small>3</small></button>
+        <button class="nav-item" type="button" data-view="api">장비 프로토콜 <small>6</small></button>
+        <p class="side-label">자료</p>
+        <button class="nav-item" type="button">오류 코드 <small>18</small></button>
+        <button class="nav-item" type="button">일반 문서 <small>5</small></button>
+        <p class="side-label">관리</p>
+        <button class="nav-item" type="button">변경 전체</button>
+        <button class="nav-item" type="button">프로젝트 설정</button>
+      </div>
+      <div class="side-scroll" id="side-api" hidden>
+        <button class="nav-item" type="button" data-view="home">← 포장 라인</button>
+        <p class="side-label">문서</p>
+        <button class="nav-item" type="button">문서 정보 <small>Base URL</small></button>
+        <label class="search-wrap"><input class="search" placeholder="Endpoint 검색"></label>
+        <p class="side-label">ENDPOINT</p>
+        <button class="endpoint" type="button" aria-current="true">
+          <span class="method post">POST</span>
+          <span class="path"><code>/devices/<wbr>{deviceId}/<wbr>commands</code><em>명령 전달</em></span>
+        </button>
+        <button class="endpoint" type="button">
+          <span class="method get">GET</span>
+          <span class="path"><code>/devices/{deviceId}</code><em>장비 조회</em></span>
+        </button>
+        <button class="endpoint" type="button">
+          <span class="method put">PUT</span>
+          <span class="path"><code>/devices/<wbr>{deviceId}/<wbr>config</code><em>장비 설정</em></span>
+        </button>
+        <button class="endpoint" type="button">
+          <span class="method del">DEL</span>
+          <span class="path"><code>/devices/{deviceId}</code><em>장비 해제</em></span>
+        </button>
+        <button class="add-endpoint" type="button" id="compose">+ Endpoint 추가</button>
+        <p class="side-label">이 문서</p>
+        <button class="nav-item" type="button">변경 이력 <small>v14</small></button>
+        <button class="nav-item" type="button">Markdown</button>
+      </div>
+      <div class="account"><strong>김서연</strong><br>편집 권한</div>
+    </aside>
+    <main class="main">
+      <section class="view" id="view-home">
+        <div class="home">
+          <header class="home-head">
+            <div>
+              <p class="kicker">공식 규격 4종 · 문서 5 · 마지막 수정 오늘 14:20</p>
+              <h1>포장 라인</h1>
+              <p class="lede">포장 설비와 서버가 주고받는 명령, 상태, 오류를 한 프로젝트에서 관리합니다.</p>
+            </div>
+            <span class="status"><i></i>활성 · 편집</span>
+          </header>
+          <div class="home-grid">
+            <section>
+              <h2 class="section-title">이어서 작업</h2>
+              <div class="resume">
+                <a href="#api" data-view="api"><span class="method post">POST</span><span><code>/devices/{deviceId}/commands</code><small>명령 전달 · REST API</small></span></a>
+                <a href="#api" data-view="api"><span class="method get">MQTT</span><span><code>lab/status</code><small>장비 상태 · QoS 1</small></span></a>
+                <a href="#api"><span class="method put">문서</span><span><code>FW 설치 메모</code><small>일반 문서 · v3</small></span></a>
+              </div>
+            </section>
+            <section>
+              <h2 class="section-title">최근 변경</h2>
+              <ol class="feed">
+                <li><time>14:20</time><div><strong>POST 명령에 speed 필드를 추가</strong><p>REST API v14 · 김서연</p></div></li>
+                <li><time>11:02</time><div><strong>lab/status 의 QoS를 1로 변경</strong><p>MQTT v6 · 박도윤</p></div></li>
+                <li><time>어제</time><div><strong>DEVICE_OFFLINE 설명을 수정</strong><p>오류 코드 v4 · 김서연</p></div></li>
+                <li><time>어제</time><div><strong>전원 순서를 설치 메모에 추가</strong><p>일반 문서 v3 · 이하늘</p></div></li>
+              </ol>
+            </section>
+          </div>
+          <section class="specs">
+            <h2 class="section-title">규격과 문서</h2>
+            <div class="spec-list">
+              <a class="spec-row" href="#api" data-view="api"><span class="grow"><strong>REST API</strong><em>v14 · Endpoint 12 · https://lab.example</em></span><span class="spec-actions"><span class="btn">열기</span><span class="btn primary">Endpoint 추가</span></span></a>
+              <a class="spec-row" href="#api"><span class="grow"><strong>MQTT</strong><em>v6 · Topic 4 · lab.example:1883</em></span><span class="spec-actions"><span class="btn">열기</span><span class="btn primary">Topic 추가</span></span></a>
+              <a class="spec-row" href="#api"><span class="grow"><strong>WebSocket</strong><em>v3 · 메시지 3 · wss://lab.example/ws</em></span><span class="spec-actions"><span class="btn">열기</span><span class="btn primary">메시지 추가</span></span></a>
+              <a class="spec-row" href="#api"><span class="grow"><strong>장비 프로토콜</strong><em>v9 · 명령 6 · TCP · BIG</em></span><span class="spec-actions"><span class="btn">열기</span><span class="btn primary">명령 추가</span></span></a>
+              <a class="spec-row" href="#api"><span class="grow"><strong>오류 코드</strong><em>18개 · 참조 중 11</em></span><span class="spec-actions"><span class="btn">열기</span></span></a>
+              <a class="spec-row" href="#api"><span class="grow"><strong>일반 문서</strong><em>SW 2 · FW 2 · APP 1</em></span><span class="spec-actions"><span class="btn">열기</span><span class="btn primary">문서 추가</span></span></a>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="view" id="view-api" hidden>
+        <div class="editor-top">
+          <div class="identity">
+            <div class="path-input">
+              <select aria-label="Method"><option>POST</option><option>GET</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select>
+              <input aria-label="Path" value="/devices/{deviceId}/commands">
+            </div>
+            <div class="names">
+              <label>이름<input value="명령 전달"></label>
+              <label>설명<input value="장비에 명령을 전달한다"></label>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button class="btn" type="button" id="json-toggle">예시</button>
+            <button class="btn primary" type="button" id="save-open">저장</button>
+            <form class="save-pop" id="save-pop" hidden>
+              <label>변경 사유<input value="speed 필드 추가"></label>
+              <button class="btn primary" type="button">이 버전으로 저장</button>
+            </form>
+          </div>
+        </div>
+        <div class="work" id="work">
+          <div class="doc">
+            <div class="tabs" role="tablist">
+              <button type="button" data-tab="request" aria-selected="true">요청</button>
+              <button type="button" data-tab="response" aria-selected="false">응답 200</button>
+              <button type="button" data-tab="params" aria-selected="false">Header · Path · Query</button>
+              <button type="button" data-tab="errors" aria-selected="false">오류 코드</button>
+            </div>
+            <section class="panel" data-panel="request" id="request-panel"></section>
+            <section class="panel" data-panel="response" hidden id="response-panel"></section>
+            <section class="panel" data-panel="params" hidden id="params-panel"></section>
+            <section class="panel" data-panel="errors" hidden>
+              <div class="schema-head"><span>선택</span><span>코드</span><span></span><span>설명</span><span>처리</span><span></span></div>
+              <div class="field is-active">
+                <div class="schema-row">
+                  <span class="cell mono"><input type="checkbox" checked> DEVICE_OFFLINE</span>
+                  <span class="cell">연결</span>
+                  <span></span>
+                  <span class="cell">장비가 응답하지 않습니다</span>
+                  <span class="cell">재연결</span>
+                  <span></span>
+                </div>
+              </div>
+              <p class="hint">프로젝트에 정의된 코드만 연결합니다. 이 화면에서 코드를 만들지 않습니다.</p>
+            </section>
+          </div>
+          <aside class="json">
+            <header>
+              <h2>Request JSON</h2>
+              <div class="seg"><button type="button" aria-pressed="true">자동</button><button type="button">직접</button></div>
+            </header>
+            <pre>{
+  <span class="k">"command"</span>: {
+    <span class="k">"name"</span>: <span class="s">"start"</span>,
+    <span class="k">"args"</span>: { <span class="k">"speed"</span>: <span class="n">10</span> }
+  }
+}</pre>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const requestFields = [
+      ["command", "object", false, "실행할 명령", "", 0],
+      ["name", "string", true, "명령 이름", "start", 1],
+      ["args", "object", false, "인자", "", 1],
+      ["speed", "integer", true, "분당 회전", "10", 2]
+    ];
+    const responseFields = [
+      ["success", "boolean", true, "접수 여부", "true", 0],
+      ["commandId", "string", true, "접수 번호", "cmd-01", 0]
+    ];
+    const paramFields = [
+      ["Authorization", "string", true, "Bearer 토큰", "Bearer …", 0, "Header"],
+      ["deviceId", "string", true, "장비 식별자", "dev-01", 0, "Path"]
+    ];
+
+    function schema(fields, withPlace) {
+      const head = `<div class="schema-head">${withPlace ? "<span>위치</span>" : "<span>필드</span>"}<span>타입</span><span>필수</span><span>설명</span><span>예시</span><span></span></div>`;
+      const rows = fields.map((field) => {
+        const [name, type, required, description, example, depth, place] = field;
+        const label = place ? place : name;
+        const fieldName = place ? name : "";
+        return `<div class="field" role="button" tabindex="0" style="--depth:${depth}">
+          <div class="schema-row">
+            <div class="cell name">${depth ? '<span class="spine"></span><span class="elbow"></span>' : ""}<span class="read">${place ? place + " · " : ""}${place ? name : name}</span><input class="edit" value="${place ? name : name}" aria-label="필드명"></div>
+            <div class="cell"><span class="read">${type}</span><select class="edit" aria-label="타입"><option>${type}</option><option>string</option><option>integer</option><option>boolean</option><option>object</option><option>array</option></select></div>
+            <div class="cell"><span class="read">${required ? "예" : ""}</span><input class="edit" type="checkbox" ${required ? "checked" : ""} aria-label="필수"></div>
+            <div class="cell"><span class="read">${description}</span><input class="edit" value="${description}" aria-label="설명"></div>
+            <div class="cell mono"><span class="read">${example}</span><input class="edit" value="${example}" aria-label="예시"></div>
+          </div>
+          <div class="extra">
+            <label class="check"><input type="checkbox"> Nullable</label>
+            <label>Format<input value="${type === "integer" ? "int32" : ""}"></label>
+            <label>Enum<input placeholder="A, B"></label>
+            <div class="row-actions"><button type="button">하위</button><button type="button">위</button><button type="button">아래</button><button type="button">삭제</button></div>
+          </div>
+        </div>`;
+      }).join("");
+      return head + rows + `<button class="btn" type="button" style="margin-top:10px">+ 필드</button><p class="hint">행을 선택하면 Nullable, Format, Enum과 순서를 편집합니다.</p>`;
+    }
+
+    document.getElementById("request-panel").innerHTML = schema(requestFields);
+    document.getElementById("response-panel").innerHTML = schema(responseFields);
+    document.getElementById("params-panel").innerHTML = schema(paramFields.map((field) => [field[6] + " / " + field[0], field[1], field[2], field[3], field[4], field[5]]));
+
+    function show(view) {
+      document.getElementById("view-home").hidden = view !== "home";
+      document.getElementById("view-api").hidden = view !== "api";
+      document.getElementById("side-home").hidden = view !== "home";
+      document.getElementById("side-api").hidden = view !== "api";
+      document.querySelectorAll("#side-home .nav-item").forEach((button) => {
+        if (button.dataset.view) button.setAttribute("aria-current", button.dataset.view === view ? "true" : "false");
+      });
+    }
+    document.body.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-view]");
+      if (trigger) { event.preventDefault(); show(trigger.dataset.view); }
+      const tab = event.target.closest(".tabs button");
+      if (tab) {
+        document.querySelectorAll(".tabs button").forEach((button) => button.setAttribute("aria-selected", "false"));
+        tab.setAttribute("aria-selected", "true");
+        document.querySelectorAll(".panel").forEach((panel) => { panel.hidden = panel.dataset.panel !== tab.dataset.tab; });
+      }
+      const field = event.target.closest(".field");
+      if (field && event.target.closest(".doc")) {
+        document.querySelectorAll(".field").forEach((item) => item.classList.remove("is-active"));
+        field.classList.add("is-active");
+      }
+    });
+    document.getElementById("json-toggle").addEventListener("click", () => {
+      const open = document.getElementById("work").classList.toggle("is-json");
+      document.getElementById("json-toggle").textContent = open ? "예시 닫기" : "예시";
+    });
+    document.getElementById("save-open").addEventListener("click", () => {
+      document.getElementById("save-pop").hidden = !document.getElementById("save-pop").hidden;
+    });
+    if (location.hash === "#api") show("api");
+  </script>
+</body>
+</html>
