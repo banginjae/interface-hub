@@ -11,7 +11,7 @@ type Revision = {
   summary: { op?: string; itemUid?: string; name?: string };
 };
 
-export function SpecHistory({ projectId, token, kind = "API" }: { projectId: string; token: string; kind?: string }) {
+export function SpecHistory({ projectId, token, kind = "API", heading = "변경 이력" }: { projectId: string; token: string; kind?: string; heading?: string | null }) {
   const noun = kind === "MQTT" ? "Topic" : kind === "WEBSOCKET" ? "메시지" : kind === "DEVICE_PROTOCOL" ? "명령" : "Endpoint";
   const operations: Record<string, string> = {
     CREATE_DOCUMENT: "문서 생성",
@@ -88,7 +88,7 @@ export function SpecHistory({ projectId, token, kind = "API" }: { projectId: str
   return (
     <div className="history-screen">
       <section>
-        <h2>변경 이력</h2>
+        {heading ? <h2>{heading}</h2> : null}
         <p className="section-empty">저장된 이력은 조회만 할 수 있습니다.</p>
         {revisions.length === 0 ? <div className="empty-work"><h2>아직 변경 이력이 없습니다.</h2></div> : (
           <div className="table-wrap">

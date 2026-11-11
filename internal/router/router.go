@@ -56,6 +56,7 @@ func New(p Params) *gin.Engine {
 			authed.PUT("/projects/:id", p.Project.Update)
 			authed.GET("/projects/:id/members", p.Project.Members)
 			authed.POST("/projects/:id/members", p.Project.AddMember)
+			authed.GET("/projects/:id/member-candidates", p.Project.MemberCandidates)
 			authed.PUT("/projects/:id/members/:userId", p.Project.UpdateMember)
 			authed.DELETE("/projects/:id/members/:userId", p.Project.RemoveMember)
 		}

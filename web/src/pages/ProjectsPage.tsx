@@ -4,6 +4,7 @@ import { apiRequest, type ApiError } from "../api";
 import { authErrorMessage, useAuth } from "../auth";
 import type { ProjectSummary } from "../projectTypes";
 import { usePageChrome } from "../Shell";
+import { useToast } from "../toast";
 
 export function ProjectsPage() {
   const auth = useAuth();
@@ -30,32 +31,59 @@ export function ProjectsPage() {
     return <Navigate to="/login" replace />;
   }
 
+  const total = projects?.length ?? 0;
+  const archived = projects?.filter((project) => project.status === "ARCHIVED").length ?? 0;
+  const openable = projects?.filter((project) => project.myPermission !== "NONE").length ?? 0;
+
   return (
-    <main className="page">
+    <main className="page projects-page">
       <div className="page-head">
         <div>
           <h1>프로젝트</h1>
+          <p className="lede">프로젝트별 인터페이스 규격과 문서를 관리합니다. 행을 선택하면 프로젝트로 이동합니다.</p>
+          {projects !== null && total > 0 ? (
+            <p className="page-meta">
+              <span>전체 {total}개</span>
+              <span>활성 {total - archived}</span>
+              {archived > 0 ? <span>보관 {archived}</span> : null}
+              {openable < total ? <span>접근 가능 {openable}</span> : null}
+            </p>
+          ) : null}
         </div>
-      </div>
-      <div className="list-tools">
-        <div className="search-field">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="프로젝트명 검색..."
-            aria-label="프로젝트명 검색"
-          />
-          {query ? <button type="button" className="search-clear" onClick={() => setQuery("")}>지우기</button> : null}
-        </div>
-        <Link className="btn primary" to="/projects/new">프로젝트 생성</Link>
+        {total > 0 ? <Link className="btn primary" to="/projects/new">+ 프로젝트 생성</Link> : null}
       </div>
       {message ? <p className="banner danger">{message}</p> : null}
       {projects === null && !message ? <p className="state-panel">불러오는 중입니다.</p> : null}
-      {projects !== null && projects.length === 0 ? <p className="state-panel">등록된 프로젝트가 없습니다.</p> : null}
-      {visible !== null && projects !== null && projects.length > 0 && visible.length === 0 ? <p className="state-panel">검색 결과가 없습니다.</p> : null}
+      {projects !== null && total === 0 ? (
+        <div className="empty-panel">
+          <h2>아직 프로젝트가 없습니다.</h2>
+          <p>프로젝트를 만들면 REST API, MQTT, WebSocket, 장비 프로토콜 규격과 문서를 한곳에서 관리할 수 있습니다.</p>
+          <Link className="btn primary" to="/projects/new">+ 첫 프로젝트 생성</Link>
+        </div>
+      ) : null}
+      {projects !== null && total > 0 ? (
+        <div className="list-tools">
+          <div className="search-field">
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="프로젝트명 검색"
+              aria-label="프로젝트명 검색"
+            />
+            {query ? <button type="button" className="search-clear" onClick={() => setQuery("")}>지우기</button> : null}
+          </div>
+          {query.trim() && visible ? <span className="list-count">{visible.length} / {total}개</span> : null}
+        </div>
+      ) : null}
+      {visible !== null && total > 0 && visible.length === 0 ? (
+        <div className="empty-panel is-compact">
+          <p>'{query.trim()}'와 일치하는 프로젝트가 없습니다.</p>
+          <button type="button" className="btn" onClick={() => setQuery("")}>검색어 지우기</button>
+        </div>
+      ) : null}
       {visible !== null && visible.length > 0 ? (
-        <div className="table-wrap">
+        <div className="table-wrap project-table">
           <table>
             <thead>
               <tr>
@@ -88,10 +116,10 @@ export function ProjectsPage() {
                       navigate(`/projects/${project.id}`);
                     }}
                   >
-                    <td>{project.title}</td>
-                    <td><span className={project.status === "ARCHIVED" ? "badge" : "badge success"}>{project.status === "ARCHIVED" ? "보관" : "활성"}</span></td>
-                    <td>{project.createdBy.name}</td>
-                    <td>{formatWhen(project.createdAt)}</td>
+                    <td className="project-cell"><strong>{project.title}</strong></td>
+                    <td><span className={project.status === "ARCHIVED" ? "badge status-badge" : "badge status-badge success"}>{project.status === "ARCHIVED" ? "보관" : "활성"}</span></td>
+                    <td className="nowrap">{project.createdBy.name}</td>
+                    <td className="nowrap muted">{formatWhen(project.createdAt)}</td>
                     <td><span className={`badge ${permission.tone}`}>{permission.text}</span></td>
                   </tr>
                 );
@@ -107,6 +135,7 @@ export function ProjectsPage() {
 export function ProjectNewPage() {
   const auth = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
@@ -133,33 +162,37 @@ export function ProjectNewPage() {
         token: auth.token,
         body: { title, description },
       });
+      toast.success("프로젝트를 만들었습니다.");
       navigate(`/projects/${created.id}`);
     } catch (error) {
       setMessage(authErrorMessage(error));
+      toast.error(`프로젝트를 만들지 못했습니다. ${authErrorMessage(error)}`);
       setSubmitting(false);
     }
   }
 
   return (
-    <main className="page">
+    <main className="page form-page">
       <div className="page-head">
         <div>
           <h1>프로젝트 생성</h1>
-          <p className="lede">공식 규격을 함께 관리할 프로젝트를 등록합니다.</p>
+          <p className="lede">공식 규격을 함께 관리할 프로젝트를 등록합니다. 생성한 사람은 프로젝트를 관리하고 멤버를 초대할 수 있습니다.</p>
         </div>
       </div>
-      <form className="card" onSubmit={onSubmit}>
+      <form className="card form-card" onSubmit={onSubmit}>
         <label>
-          프로젝트명
-          <input value={title} onChange={(event) => setTitle(event.target.value)} required />
+          <span className="field-label">프로젝트명 <b className="req-mark" aria-hidden="true">*</b><span className="sr-only">(필수)</span></span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={200} placeholder="예: 스마트 도어락 2.0" autoFocus />
+          <span className="field-hint">목록과 문서 제목에 표시됩니다. 200자까지 입력할 수 있습니다.</span>
         </label>
         <label>
-          설명
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} />
+          <span className="field-label">설명 <span className="field-optional">선택</span></span>
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={5} placeholder="프로젝트의 목적, 대상 장비나 서비스 등을 간단히 적어 주세요." />
         </label>
-        {message ? <p className="banner danger">{message}</p> : null}
-        <div className="form-actions">
-          <button type="submit" disabled={submitting}>{submitting ? "생성 중" : "생성"}</button>
+        {message ? <p className="banner danger" role="alert">{message}</p> : null}
+        <div className="form-actions form-footer">
+          <Link className="btn" to="/projects">취소</Link>
+          <button type="submit" className="btn primary" disabled={submitting || !title.trim()}>{submitting ? "생성 중…" : "프로젝트 생성"}</button>
         </div>
       </form>
     </main>

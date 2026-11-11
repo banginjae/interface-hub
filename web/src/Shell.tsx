@@ -36,17 +36,6 @@ export function useNavGuard(guard: () => boolean, token: boolean) {
   }, [shell, token]);
 }
 
-type SidebarSlot = {
-  setOverride: (active: boolean) => void;
-  slot: HTMLDivElement | null;
-};
-
-const SidebarSlotContext = createContext<SidebarSlot | null>(null);
-
-export function useSidebarSlot() {
-  return useContext(SidebarSlotContext);
-}
-
 function UserMenu({ allow }: { allow: (event: { preventDefault: () => void }) => void }) {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
@@ -125,6 +114,18 @@ function UserGlyph() {
   );
 }
 
+function BrandLink({ subtitle, allow }: { subtitle: string; allow: (event: { preventDefault: () => void }) => void }) {
+  return (
+    <Link to="/projects" className="brand brand-link" title="프로젝트 목록으로 이동" aria-label={`${appConfig.serviceName} · 프로젝트 목록으로 이동`} onClick={allow}>
+      <span className="brand-mark" aria-hidden="true">{appConfig.brandMark}</span>
+      <span className="brand-text">
+        <strong>{appConfig.serviceName}</strong>
+        <small>{subtitle}</small>
+      </span>
+    </Link>
+  );
+}
+
 function projectIdFromPath(pathname: string) {
   const match = pathname.match(/^\/projects\/(\d+)(?:\/|$)/);
   return match?.[1] ?? null;
@@ -135,8 +136,6 @@ export function Shell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const projectId = projectIdFromPath(location.pathname);
   const [chrome, setChromeState] = useState<Chrome>(defaultChrome);
-  const [sidebarOverride, setSidebarOverride] = useState(false);
-  const [sidebarSlot, setSidebarSlot] = useState<HTMLDivElement | null>(null);
   const guardRef = useRef<() => boolean>(() => true);
   const setChrome = useCallback((next: Chrome) => {
     setChromeState((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next));
@@ -145,8 +144,6 @@ export function Shell({ children }: { children: ReactNode }) {
     guardRef.current = guard;
   }, []);
   const shell = useMemo(() => ({ chrome, setChrome, setGuard }), [chrome, setChrome, setGuard]);
-  const sidebar = useMemo(() => ({ setOverride: setSidebarOverride, slot: sidebarSlot }), [sidebarSlot]);
-
   function allow(event: { preventDefault: () => void }) {
     if (!guardRef.current()) {
       event.preventDefault();
@@ -173,27 +170,18 @@ export function Shell({ children }: { children: ReactNode }) {
   if (projectId) {
     return (
       <ChromeContext.Provider value={shell}>
-        <SidebarSlotContext.Provider value={sidebar}>
-          <div className="app-shell workspace-app">
-            <aside className="sidebar project-side">
-              <div className="brand">
-                <span className="brand-mark">{appConfig.brandMark}</span>
-                <span>
-                  <strong>{appConfig.serviceName}</strong>
-                  <small>프로젝트 작업 공간</small>
-                </span>
-              </div>
-              <div ref={setSidebarSlot} className="side-slot" hidden={!sidebarOverride} />
-              {sidebarOverride ? null : <ProjectNav projectId={projectId} allow={allow} />}
-            </aside>
-            <div className="workspace">
-              <header className="workspace-userbar">
-                <UserMenu allow={allow} />
-              </header>
-              <div className="content">{children}</div>
-            </div>
+        <div className="app-shell workspace-app">
+          <aside className="sidebar project-side">
+            <BrandLink subtitle="프로젝트 작업 공간" allow={allow} />
+            <ProjectNav projectId={projectId} allow={allow} />
+          </aside>
+          <div className="workspace">
+            <header className="workspace-userbar">
+              <UserMenu allow={allow} />
+            </header>
+            <div className="content">{children}</div>
           </div>
-        </SidebarSlotContext.Provider>
+        </div>
       </ChromeContext.Provider>
     );
   }
@@ -202,14 +190,8 @@ export function Shell({ children }: { children: ReactNode }) {
     <ChromeContext.Provider value={shell}>
       <div className="app-shell">
         <aside className="sidebar">
-          <div className="brand">
-            <span className="brand-mark">{appConfig.brandMark}</span>
-            <span>
-              <strong>{appConfig.serviceName}</strong>
-              <small>{appConfig.tagline}</small>
-            </span>
-          </div>
-          <nav>
+          <BrandLink subtitle={appConfig.tagline} allow={allow} />
+          <nav aria-label="주 메뉴">
             <NavLink to="/projects" onClick={allow}>프로젝트</NavLink>
             {auth.user.role === "MASTER" ? <NavLink to="/master/users" onClick={allow}>계정 관리</NavLink> : null}
           </nav>

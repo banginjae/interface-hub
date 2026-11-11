@@ -204,7 +204,11 @@ func cleanErrorCode(write ErrorCodeWrite, requireVersion bool) (model.ErrorCode,
 	if requireVersion && write.Version == 0 {
 		return model.ErrorCode{}, "", ErrProjectInvalid
 	}
-	reason, err := cleanReason(write.ChangeReason)
+	clean := cleanReason
+	if requireVersion {
+		clean = cleanUpdateReason
+	}
+	reason, err := clean(write.ChangeReason)
 	if err != nil {
 		return model.ErrorCode{}, "", err
 	}
@@ -231,6 +235,9 @@ func mapErrorCodeServiceErr(err error) error {
 	}
 	if errors.Is(err, model.ErrArchived) {
 		return ErrProjectArchived
+	}
+	if errors.Is(err, model.ErrSpecInput) {
+		return ErrProjectInvalid
 	}
 	return err
 }

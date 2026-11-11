@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { apiRequest, type AccountUser } from "../api";
 import { authErrorMessage, useAuth } from "../auth";
 import { usePageChrome } from "../Shell";
+import { useToast } from "../toast";
 
 export function AccountPage() {
   const auth = useAuth();
@@ -18,6 +19,7 @@ export function AccountPage() {
 
 function AccountEditor({ user }: { user: AccountUser }) {
   const auth = useAuth();
+  const toast = useToast();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [profileMessage, setProfileMessage] = useState("");
@@ -56,9 +58,11 @@ function AccountEditor({ user }: { user: AccountUser }) {
       setEmail(updated.email);
       setProfileError(false);
       setProfileMessage("기본 정보를 저장했습니다.");
+      toast.success("기본 정보를 저장했습니다.");
     } catch (error) {
       setProfileError(true);
       setProfileMessage(authErrorMessage(error));
+      toast.error(`기본 정보를 저장하지 못했습니다. ${authErrorMessage(error)}`);
     } finally {
       setSaving(false);
     }
@@ -93,9 +97,11 @@ function AccountEditor({ user }: { user: AccountUser }) {
       auth.markPasswordChanged();
       setPasswordError(false);
       setPasswordMessage("비밀번호를 변경했습니다.");
+      toast.success("비밀번호를 변경했습니다.");
     } catch (error) {
       setPasswordError(true);
       setPasswordMessage(authErrorMessage(error));
+      toast.error(`비밀번호를 변경하지 못했습니다. ${authErrorMessage(error)}`);
     } finally {
       setChanging(false);
     }

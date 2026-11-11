@@ -126,7 +126,7 @@ func (s *SpecService) UpdateOverview(ctx context.Context, actor model.User, proj
 	if change.Version < 1 {
 		return 0, ErrProjectInvalid
 	}
-	reason, err := cleanReason(change.ChangeReason)
+	reason, err := cleanUpdateReason(change.ChangeReason)
 	if err != nil {
 		return 0, err
 	}
@@ -149,7 +149,7 @@ func (s *SpecService) CreateItem(ctx context.Context, actor model.User, projectI
 	if err := s.gate(ctx, actor, projectID, true); err != nil {
 		return 0, "", err
 	}
-	item, reason, err := s.prepareItem(kind, change)
+	item, reason, err := s.prepareItem(kind, change, true)
 	if err != nil {
 		return 0, "", err
 	}
@@ -168,7 +168,7 @@ func (s *SpecService) UpdateItem(ctx context.Context, actor model.User, projectI
 	if err := s.gate(ctx, actor, projectID, true); err != nil {
 		return 0, err
 	}
-	item, reason, err := s.prepareItem(kind, change)
+	item, reason, err := s.prepareItem(kind, change, false)
 	if err != nil {
 		return 0, err
 	}
@@ -204,7 +204,7 @@ func (s *SpecService) Reorder(ctx context.Context, actor model.User, projectID u
 	if version < 1 {
 		return 0, ErrProjectInvalid
 	}
-	clean, err := cleanReason(reason)
+	clean, err := cleanUpdateReason(reason)
 	if err != nil {
 		return 0, err
 	}
@@ -268,14 +268,18 @@ func (s *SpecService) Markdown(ctx context.Context, actor model.User, projectID 
 	return renderMarkdown(kind, project.Title, doc, items), MarkdownFilename(project.Title, kind, doc.Version), nil
 }
 
-func (s *SpecService) prepareItem(kind string, change SpecItemChange) (model.SpecItemWrite, string, error) {
+func (s *SpecService) prepareItem(kind string, change SpecItemChange, create bool) (model.SpecItemWrite, string, error) {
 	if !supportedSpecKind(kind) {
 		return model.SpecItemWrite{}, "", model.ErrNotFound
 	}
 	if change.Version < 1 {
 		return model.SpecItemWrite{}, "", ErrProjectInvalid
 	}
-	reason, err := cleanReason(change.ChangeReason)
+	clean := cleanUpdateReason
+	if create {
+		clean = cleanReason
+	}
+	reason, err := clean(change.ChangeReason)
 	if err != nil {
 		return model.SpecItemWrite{}, "", err
 	}
@@ -351,6 +355,16 @@ func (s *SpecService) gate(ctx context.Context, actor model.User, projectID uint
 func cleanReason(value string) (string, error) {
 	reason := strings.TrimSpace(value)
 	if reason == "" || utf8.RuneCountInString(reason) > 500 {
+		return "", ErrProjectInvalid
+	}
+	return reason, nil
+}
+
+// cleanUpdateReason allows an empty reason on update requests; the repository requires it
+// only when the update actually changes stored data.
+func cleanUpdateReason(value string) (string, error) {
+	reason := strings.TrimSpace(value)
+	if utf8.RuneCountInString(reason) > 500 {
 		return "", ErrProjectInvalid
 	}
 	return reason, nil

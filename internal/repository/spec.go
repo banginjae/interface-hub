@@ -110,6 +110,13 @@ func (r *SpecRepository) CreateDocument(ctx context.Context, projectID, actorID 
 
 func (r *SpecRepository) UpdateOverview(ctx context.Context, projectID, actorID uint64, kind string, version uint, title, overview, reason string, now time.Time) (uint, error) {
 	return r.mutate(ctx, projectID, kind, version, func(tx *gorm.DB, doc lockedDocument) (string, string, string, error) {
+		var currentOverview string
+		if err := tx.Raw("SELECT overview FROM spec_documents WHERE id = ?", doc.ID).Row().Scan(&currentOverview); err != nil {
+			return "", "", "", err
+		}
+		if doc.Title == title && sameJSON(currentOverview, overview) {
+			return "", "", "", errNoChange
+		}
 		if err := tx.Exec(`
 			UPDATE spec_documents SET title = ?, overview = ? WHERE id = ?
 		`, title, overview, doc.ID).Error; err != nil {
@@ -149,6 +156,13 @@ func (r *SpecRepository) CreateItem(ctx context.Context, projectID, actorID uint
 
 func (r *SpecRepository) UpdateItem(ctx context.Context, projectID, actorID uint64, kind, itemUID string, version uint, item model.SpecItemWrite, reason string, now time.Time) (uint, error) {
 	return r.mutate(ctx, projectID, kind, version, func(tx *gorm.DB, doc lockedDocument) (string, string, string, error) {
+		unchanged, err := itemUnchanged(tx, doc.ID, itemUID, item)
+		if err != nil {
+			return "", "", "", err
+		}
+		if unchanged {
+			return "", "", "", errNoChange
+		}
 		if err := mqttRelatedExists(tx, kind, doc.ID, itemUID, item.Payload); err != nil {
 			return "", "", "", err
 		}
@@ -212,6 +226,9 @@ func (r *SpecRepository) Reorder(ctx context.Context, projectID, actorID uint64,
 		}
 		if !sameUIDSet(items, uids) {
 			return "", "", "", model.SpecConflict{Current: doc.Version, ItemSet: true}
+		}
+		if sameOrder(items, uids) {
+			return "", "", "", errNoChange
 		}
 		for index, uid := range uids {
 			result := tx.Exec(`
@@ -333,7 +350,14 @@ func (r *SpecRepository) mutate(ctx context.Context, projectID uint64, kind stri
 			return model.SpecConflict{Current: doc.Version}
 		}
 		op, itemUID, name, err := change(tx, doc)
+		if errors.Is(err, errNoChange) {
+			next = version
+			return nil
+		}
 		if err != nil {
+			return err
+		}
+		if err := requireReason(reason); err != nil {
 			return err
 		}
 		result := tx.Exec(`
@@ -596,6 +620,45 @@ func insertRevision(tx *gorm.DB, documentID uint64, version uint, reason string,
 		(document_id, version, change_reason, actor_id, summary_json, snapshot_json, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`, documentID, version, reason, actorID, string(summary), snapshot, now).Error
+}
+
+func sameOrder(items []model.SpecItem, uids []string) bool {
+	if len(items) != len(uids) {
+		return false
+	}
+	for index, item := range items {
+		if item.ItemUID != uids[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func itemUnchanged(tx *gorm.DB, documentID uint64, itemUID string, item model.SpecItemWrite) (bool, error) {
+	var current struct {
+		ID      uint64
+		Name    string
+		Summary string
+		Status  string
+		Payload string
+	}
+	err := tx.Raw(`
+		SELECT id, name, summary, status, payload FROM spec_items WHERE document_id = ? AND item_uid = ?
+	`, documentID, itemUID).Row().Scan(&current.ID, &current.Name, &current.Summary, &current.Status, &current.Payload)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, model.ErrNotFound
+	}
+	if err != nil {
+		return false, err
+	}
+	if current.Name != item.Name || current.Summary != item.Summary || current.Status != item.Status || !sameJSON(current.Payload, item.Payload) {
+		return false, nil
+	}
+	var linked []uint64
+	if err := tx.Raw("SELECT error_code_id FROM spec_item_error_codes WHERE spec_item_id = ?", current.ID).Scan(&linked).Error; err != nil {
+		return false, err
+	}
+	return sameIDSet(linked, item.ErrorCodeIDs), nil
 }
 
 func sameUIDSet(items []model.SpecItem, uids []string) bool {

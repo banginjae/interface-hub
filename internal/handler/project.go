@@ -172,6 +172,23 @@ func (h *ProjectHandler) AddMember(c *gin.Context) {
 	})
 }
 
+func (h *ProjectHandler) MemberCandidates(c *gin.Context) {
+	actor, projectID, ok := actorAndProject(c)
+	if !ok {
+		return
+	}
+	rows, err := h.projects.MemberCandidates(c.Request.Context(), actor, projectID, c.Query("q"))
+	if err != nil {
+		writeProjectError(c, h.log, err)
+		return
+	}
+	out := make([]dto.MemberCandidate, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, dto.MemberCandidate{UserID: row.UserID, EmployeeNo: row.EmployeeNo, Name: row.Name})
+	}
+	c.JSON(http.StatusOK, dto.MemberCandidateListResponse{Candidates: out})
+}
+
 func (h *ProjectHandler) UpdateMember(c *gin.Context) {
 	actor, projectID, ok := actorAndProject(c)
 	if !ok {
@@ -336,6 +353,8 @@ func writeProjectError(c *gin.Context, log *slog.Logger, err error) {
 		c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "PROJECT_ARCHIVED", Message: "보관된 프로젝트는 수정할 수 없습니다."})
 	case errors.Is(err, service.ErrCreatorLocked):
 		c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "CREATOR_PERMISSION_LOCKED", Message: "생성자 권한은 변경할 수 없습니다."})
+	case errors.Is(err, service.ErrMemberInactive):
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Code: "MEMBER_INACTIVE", Message: "비활성 계정은 멤버로 추가할 수 없습니다."})
 	case errors.Is(err, model.ErrMemberExists):
 		c.JSON(http.StatusConflict, dto.ErrorResponse{Code: "MEMBER_ALREADY_EXISTS", Message: "이미 등록된 멤버입니다."})
 	case errors.Is(err, model.ErrNotFound):

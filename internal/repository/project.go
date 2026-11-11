@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"interface-hub/internal/model"
@@ -140,6 +141,29 @@ func (r *ProjectRepository) FindMember(ctx context.Context, projectID, userID ui
 	}
 	return member, nil
 }
+
+func (r *ProjectRepository) MemberCandidates(ctx context.Context, projectID uint64, query string, limit int) ([]model.MemberCandidate, error) {
+	pattern := "%" + likeEscaper.Replace(query) + "%"
+	var rows []model.MemberCandidate
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT u.id AS user_id, u.employee_no, u.name
+		FROM users u
+		WHERE u.active = 1
+		  AND (u.name LIKE ? ESCAPE '!' OR u.employee_no LIKE ? ESCAPE '!')
+		  AND NOT EXISTS (SELECT 1 FROM project_members m WHERE m.project_id = ? AND m.user_id = u.id)
+		ORDER BY u.name ASC, u.employee_no ASC
+		LIMIT ?
+	`, pattern, pattern, projectID, limit).Scan(&rows).Error
+	if err != nil {
+		return nil, mapProjectErr(err)
+	}
+	if rows == nil {
+		rows = []model.MemberCandidate{}
+	}
+	return rows, nil
+}
+
+var likeEscaper = strings.NewReplacer("!", "!!", "%", "!%", "_", "!_")
 
 func (r *ProjectRepository) AddMember(ctx context.Context, member model.ProjectMember) error {
 	return mapProjectErr(r.db.WithContext(ctx).Create(&member).Error)

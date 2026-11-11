@@ -172,6 +172,18 @@ func (r *GeneralRepository) Create(ctx context.Context, projectID, actorID uint6
 
 func (r *GeneralRepository) Update(ctx context.Context, projectID, actorID, id uint64, version uint, title, department, content, reason string, now time.Time) (uint, error) {
 	return r.mutate(ctx, projectID, actorID, id, version, reason, now, func(tx *gorm.DB, doc lockedGeneral) error {
+		var stored struct{ Title, Department, Content string }
+		if err := tx.Raw(`
+			SELECT title, IFNULL(department, ''), content FROM general_documents WHERE id = ? AND deleted_at IS NULL
+		`, doc.ID).Row().Scan(&stored.Title, &stored.Department, &stored.Content); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return model.ErrNotFound
+			}
+			return err
+		}
+		if stored.Title == title && stored.Department == department && stored.Content == content {
+			return errNoChange
+		}
 		result := tx.Exec(`
 			UPDATE general_documents
 			SET title = ?, department = ?, content = ?
@@ -216,6 +228,13 @@ func (r *GeneralRepository) mutate(ctx context.Context, projectID, actorID, id u
 			return model.SpecConflict{Current: doc.Version}
 		}
 		if err := change(tx, doc); err != nil {
+			if errors.Is(err, errNoChange) {
+				next = version
+				return nil
+			}
+			return err
+		}
+		if err := requireReason(reason); err != nil {
 			return err
 		}
 		result := tx.Exec(`
@@ -242,7 +261,7 @@ func (r *GeneralRepository) mutate(ctx context.Context, projectID, actorID, id u
 	})
 	if err != nil {
 		var conflict model.SpecConflict
-		if errors.As(err, &conflict) || errors.Is(err, model.ErrNotFound) || errors.Is(err, model.ErrArchived) {
+		if errors.As(err, &conflict) || errors.Is(err, model.ErrNotFound) || errors.Is(err, model.ErrArchived) || errors.Is(err, model.ErrSpecInput) {
 			return 0, err
 		}
 		return 0, ErrDatabase

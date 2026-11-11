@@ -64,6 +64,16 @@ type MemberListResponse struct {
 	Members []Member `json:"members"`
 }
 
+type MemberCandidate struct {
+	UserID     uint64 `json:"userId"`
+	EmployeeNo string `json:"employeeNo"`
+	Name       string `json:"name"`
+}
+
+type MemberCandidateListResponse struct {
+	Candidates []MemberCandidate `json:"candidates"`
+}
+
 type AddMemberRequest struct {
 	EmployeeNo string `json:"employeeNo"`
 	Permission string `json:"permission"`

@@ -103,6 +103,21 @@ func (r *ErrorCodeRepository) Update(ctx context.Context, projectID, actorID, id
 		if current != version {
 			return model.SpecConflict{Current: current}
 		}
+		var stored struct{ Code, Category, Description, ConditionText, Handling string }
+		if err := tx.Raw(`
+			SELECT code, category, description, IFNULL(condition_text, ''), IFNULL(handling, '')
+			FROM error_codes WHERE id = ? AND project_id = ?
+		`, id, projectID).Row().Scan(&stored.Code, &stored.Category, &stored.Description, &stored.ConditionText, &stored.Handling); err != nil {
+			return err
+		}
+		if stored.Code == code.Code && stored.Category == code.Category && stored.Description == code.Description &&
+			stored.ConditionText == code.ConditionText && stored.Handling == code.Handling {
+			next = version
+			return nil
+		}
+		if err := requireReason(reason); err != nil {
+			return err
+		}
 		result := tx.Exec(`
 			UPDATE error_codes
 			SET code = ?, category = ?, description = ?, condition_text = ?, handling = ?,
@@ -377,7 +392,7 @@ func mapErrorCodeErr(err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, model.ErrNotFound) || errors.Is(err, model.ErrArchived) || errors.Is(err, model.ErrErrorCodeTaken) || errors.Is(err, model.ErrErrorCodeInUse) {
+	if errors.Is(err, model.ErrNotFound) || errors.Is(err, model.ErrArchived) || errors.Is(err, model.ErrErrorCodeTaken) || errors.Is(err, model.ErrErrorCodeInUse) || errors.Is(err, model.ErrSpecInput) {
 		return err
 	}
 	var conflict model.SpecConflict

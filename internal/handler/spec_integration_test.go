@@ -701,7 +701,9 @@ func TestWebSocketSpecOnMariaDB(t *testing.T) {
 	if !containsText(raw, "command.execute") || !containsText(raw, "SERVER_TO_CLIENT") || !containsText(raw, `"messageKind":"EVENT"`) {
 		t.Fatalf("stored %s", raw)
 	}
-	updated := sendJSON(t, http.MethodPut, base+"/specs/WEBSOCKET/items/"+first.ItemUID, creatorToken, wsBody(5, "명령 실행", "command.execute", "CLIENT_TO_SERVER", "REQUEST", nil))
+	executeUpdate := wsBody(5, "명령 실행", "command.execute", "CLIENT_TO_SERVER", "REQUEST", nil)
+	executeUpdate["summary"] = "명령 실행 요청"
+	updated := sendJSON(t, http.MethodPut, base+"/specs/WEBSOCKET/items/"+first.ItemUID, creatorToken, executeUpdate)
 	if updated.StatusCode != http.StatusOK || fieldOf(t, readBody(t, updated), "version") != "6" {
 		t.Fatalf("update %d %s", updated.StatusCode, readBody(t, updated))
 	}

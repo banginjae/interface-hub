@@ -1,21 +1,63 @@
 import {
-  blankField,
   errorCodeIdsOf,
   fieldFromApi,
   fieldToApi,
-  newKey,
   previewText,
-  type ApiField,
   type ExampleDraft,
-  type FieldNode,
   type SpecItem,
 } from "./specModel";
 
 export const mqttDirections = [
-  { value: "DEVICE_TO_SERVER", label: "장비 → 서버 (Publish)" },
-  { value: "SERVER_TO_DEVICE", label: "서버 → 장비 (Publish)" },
-  { value: "BIDIRECTIONAL", label: "양방향" },
+  {
+    value: "DEVICE_TO_SERVER", label: "장비 → 서버 (Publish)", short: "장비→서버",
+    hint: "장비가 발행(Publish)하고 서버가 구독(Subscribe)합니다.",
+    publisherExample: "예: Gateway GW001", subscriberExample: "예: Backend Server",
+  },
+  {
+    value: "SERVER_TO_DEVICE", label: "서버 → 장비 (Publish)", short: "서버→장비",
+    hint: "서버가 발행(Publish)하고 장비가 구독(Subscribe)합니다.",
+    publisherExample: "예: Backend Server", subscriberExample: "예: Gateway GW001",
+  },
+  {
+    value: "BIDIRECTIONAL", label: "양방향", short: "양방향",
+    hint: "장비와 서버가 같은 Topic으로 서로 발행하고 구독합니다.",
+    publisherExample: "예: Gateway GW001, Backend Server", subscriberExample: "예: Backend Server, Gateway GW001",
+  },
 ];
+
+export const qosOptions = [
+  { value: 0, label: "0 · 최대 한 번", hint: "수신 확인 없이 최대 한 번 전달합니다. 유실될 수 있지만 가장 가볍습니다." },
+  { value: 1, label: "1 · 최소 한 번", hint: "최소 한 번 전달합니다. 같은 메시지를 중복 수신할 수 있습니다." },
+  { value: 2, label: "2 · 정확히 한 번", hint: "정확히 한 번 전달되도록 처리합니다. 가장 무겁습니다." },
+];
+
+export const mqttTerms = [
+  { term: "Topic", text: "메시지를 발행하거나 구독하는 경로입니다. 단계를 / 로 구분합니다." },
+  { term: "Publish", text: "Topic으로 메시지를 보내는(발행하는) 동작입니다." },
+  { term: "Subscribe", text: "Topic의 메시지를 받기 위해 구독하는 동작입니다." },
+  { term: "QoS 0", text: "수신 확인 없이 최대 한 번 전달합니다." },
+  { term: "QoS 1", text: "최소 한 번 전달합니다. 중복 수신이 생길 수 있습니다." },
+  { term: "QoS 2", text: "정확히 한 번 전달되도록 처리합니다." },
+  { term: "Retain", text: "Broker가 그 Topic의 마지막 Retained 메시지를 보관했다가 새 구독자에게 바로 전달합니다." },
+];
+
+export const topicExamples = [
+  "gateway/GW001/heartbeat",
+  "gateway/GW001/doorlock/DL001/event",
+  "gateway/{gatewayId}/doorlock/{doorlockId}/command",
+];
+
+export function topicHasWildcard(topic: string) {
+  return topic.split("/").some((part) => part === "+" || part === "#");
+}
+
+export function directionGuide(direction: string) {
+  return mqttDirections.find((item) => item.value === direction) ?? mqttDirections[0];
+}
+
+export function directionShort(direction: string) {
+  return mqttDirections.find((item) => item.value === direction)?.short ?? direction;
+}
 
 export type MqttDraft = {
   name: string;
@@ -45,10 +87,10 @@ export type MqttOverviewDraft = {
 
 export function blankMqtt(): MqttDraft {
   return {
-    name: "새 Topic",
+    name: "",
     summary: "",
     status: "ACTIVE",
-    topic: "lab/status",
+    topic: "",
     qos: 0,
     retain: false,
     direction: "DEVICE_TO_SERVER",
@@ -108,37 +150,17 @@ export function mqttToPayload(draft: MqttDraft) {
   };
 }
 
-export function mqttError(draft: MqttDraft) {
-  if (!draft.name.trim() || !draft.changeReason.trim()) {
-    return "Topic 이름과 변경 사유를 입력하세요.";
-  }
-  if (!validTopic(draft.topic.trim())) {
-    return "Topic은 공백 없이 쓰고, # 는 마지막 단계에만 둘 수 있습니다.";
-  }
-  if (![0, 1, 2].includes(draft.qos)) {
-    return "QoS는 0, 1, 2 중 하나입니다.";
-  }
-  if (!mqttDirections.some((item) => item.value === draft.direction)) {
-    return "방향을 선택하세요.";
-  }
-  const preview = previewText(draft.payload);
-  if (preview.problem) {
-    return preview.problem;
-  }
-  return null;
-}
-
 export function topicNotes(topic: string) {
-  const notes: string[] = [];
-  if (topic.includes("+")) {
-    notes.push("+ 는 그 한 단계를 아무 값이나 받는 와일드카드입니다.");
-  }
-  if (topic.includes("#")) {
-    notes.push("# 는 남은 단계를 모두 받는 와일드카드이며 마지막에만 둡니다.");
-  }
+  const notes: Array<{ tone: "info" | "warning"; text: string }> = [];
   const variables = topic.match(/\{[^}]+\}/g) ?? [];
   if (variables.length > 0) {
-    notes.push(`Topic 변수: ${variables.join(", ")}`);
+    notes.push({ tone: "info", text: `${variables.join(", ")}는 문서용 변수 표기입니다. 실제 메시지에서는 GW001처럼 실제 값으로 바뀝니다.` });
+  }
+  if (topicHasWildcard(topic)) {
+    notes.push({
+      tone: "warning",
+      text: "+ 또는 # 가 있어 Subscribe 필터 형태입니다. 실제로 발행(Publish)하는 Topic 이름에는 와일드카드를 쓸 수 없으니, 발행 Topic을 정의한다면 {gatewayId}처럼 변수 표기를 쓰세요. (저장은 가능합니다)",
+    });
   }
   return notes;
 }
@@ -155,39 +177,3 @@ export function addTag(values: string[], text: string) {
   return [...values, next];
 }
 
-export function payloadFields(fields: ApiField[] | FieldNode[]) {
-  return fields;
-}
-
-export function newPayloadField() {
-  return blankField("");
-}
-
-export function payloadKey() {
-  return newKey();
-}
-
-function validTopic(topic: string) {
-  if (!topic || topic.length > 300 || /\s/.test(topic)) {
-    return false;
-  }
-  const parts = topic.split("/");
-  let seenHash = false;
-  for (let index = 0; index < parts.length; index += 1) {
-    const part = parts[index];
-    if (!part || seenHash) {
-      return false;
-    }
-    if (part === "#") {
-      if (index !== parts.length - 1) {
-        return false;
-      }
-      seenHash = true;
-      continue;
-    }
-    if (part.includes("#") || (part.includes("+") && part !== "+")) {
-      return false;
-    }
-  }
-  return true;
-}

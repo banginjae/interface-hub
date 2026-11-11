@@ -18,7 +18,18 @@
   --danger: #b42318;
   --danger-bg: #fdeceb;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --focus-ring: 0 0 0 3px rgba(31, 95, 191, 0.16);
   --radius: 8px;
+  --radius-lg: 12px;
+  --control-height: 40px;
+  --side-bg: #1a2332;
+  --side-active: #243044;
+  --side-accent: #1f6feb;
+  --side-text: #d5dce6;
+  --side-muted: #93a0b3;
+  --side-line: rgba(255, 255, 255, 0.08);
+  --side-hover: rgba(255, 255, 255, 0.06);
   --side-width: 280px;
   --header: 60px;
   --font: "Segoe UI", "Malgun Gothic", sans-serif;

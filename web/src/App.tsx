@@ -16,6 +16,7 @@ import { SpecPage } from "./pages/SpecPage";
 import { ProjectNewPage, ProjectsPage } from "./pages/ProjectsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { Shell } from "./Shell";
+import { ToastProvider } from "./toast";
 
 export default function App() {
   useEffect(() => {
@@ -23,25 +24,27 @@ export default function App() {
   }, []);
   return (
     <AuthProvider>
-      <Shell>
-        <Routes>
-          <Route path="/" element={<HealthPage />} />
-          <Route path="/status" element={<HealthPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/new" element={<ProjectNewPage />} />
-          <Route path="/projects/:id" element={<ProjectDetailPage />} />
-          <Route path="/projects/:id/specs/api" element={<SpecPage />} />
-          <Route path="/projects/:id/specs/mqtt" element={<MqttPage />} />
-          <Route path="/projects/:id/specs/websocket" element={<WsPage />} />
-          <Route path="/projects/:id/specs/device" element={<DevicePage />} />
-          <Route path="/projects/:id/docs" element={<DocsPage />} />
-          <Route path="/projects/:id/error-codes" element={<ErrorCodesPage />} />
-          <Route path="/master/users" element={<UsersPage />} />
-          <Route path="*" element={<MissingPage />} />
-        </Routes>
-      </Shell>
+      <ToastProvider>
+        <Shell>
+          <Routes>
+            <Route path="/" element={<HealthPage />} />
+            <Route path="/status" element={<HealthPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/new" element={<ProjectNewPage />} />
+            <Route path="/projects/:id" element={<ProjectDetailPage />} />
+            <Route path="/projects/:id/specs/api" element={<SpecPage />} />
+            <Route path="/projects/:id/specs/mqtt" element={<MqttPage />} />
+            <Route path="/projects/:id/specs/websocket" element={<WsPage />} />
+            <Route path="/projects/:id/specs/device" element={<DevicePage />} />
+            <Route path="/projects/:id/docs" element={<DocsPage />} />
+            <Route path="/projects/:id/error-codes" element={<ErrorCodesPage />} />
+            <Route path="/master/users" element={<UsersPage />} />
+            <Route path="*" element={<MissingPage />} />
+          </Routes>
+        </Shell>
+      </ToastProvider>
     </AuthProvider>
   );
 }

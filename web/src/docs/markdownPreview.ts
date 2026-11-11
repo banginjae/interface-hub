@@ -14,7 +14,15 @@ function inline(value: string) {
   return html;
 }
 
-export function renderMarkdown(source: string) {
+const tableSeparator = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+
+function tableCells(line: string) {
+  const cells = line.trim().replace(/^\|/, "").replace(/(?<!\\)\|$/, "").split(/(?<!\\)\|/);
+  return cells.map((cell) => cell.trim().replace(/\\\|/g, "|"));
+}
+
+export function renderMarkdown(source: string, options: { rich?: boolean } = {}) {
+  const rich = Boolean(options.rich);
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const out: string[] = [];
   let list: "ul" | "ol" | null = null;
@@ -29,17 +37,41 @@ export function renderMarkdown(source: string) {
     const line = lines[index];
     if (line.startsWith("```")) {
       closeList();
+      const language = rich ? line.slice(3).trim().replace(/[^a-z0-9-]/gi, "") : "";
       const block: string[] = [];
       index += 1;
       while (index < lines.length && !lines[index].startsWith("```")) {
         block.push(escapeHtml(lines[index]));
         index += 1;
       }
-      out.push(`<pre><code>${block.join("\n")}</code></pre>`);
+      out.push(language
+        ? `<pre data-lang="${language}"><code>${block.join("\n")}</code></pre>`
+        : `<pre><code>${block.join("\n")}</code></pre>`);
       index += 1;
       continue;
     }
-    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
+    if (rich && line.trim().startsWith("|") && index + 1 < lines.length && tableSeparator.test(lines[index + 1].trim())) {
+      closeList();
+      const head = tableCells(line);
+      index += 2;
+      const rows: string[][] = [];
+      while (index < lines.length && lines[index].trim().startsWith("|")) {
+        rows.push(tableCells(lines[index]));
+        index += 1;
+      }
+      out.push(
+        `<div class="md-table"><table><thead><tr>${head.map((cell) => `<th>${inline(cell)}</th>`).join("")}</tr></thead>`
+        + `<tbody>${rows.map((row) => `<tr>${head.map((_, cellIndex) => `<td>${inline(row[cellIndex] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
+      );
+      continue;
+    }
+    if (rich && /^\s*(-{3,}|\*{3,})\s*$/.test(line)) {
+      closeList();
+      out.push("<hr>");
+      index += 1;
+      continue;
+    }
+    const heading = (rich ? /^(#{1,4})\s+(.*)$/ : /^(#{1,3})\s+(.*)$/).exec(line);
     if (heading) {
       closeList();
       const level = heading[1].length;

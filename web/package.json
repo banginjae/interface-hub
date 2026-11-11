@@ -6,6 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "check:rest": "node scripts/check-rest-validation.mjs",
+    "check:markdown": "node scripts/check-markdown-preview.mjs",
+    "check:mqtt": "node scripts/check-mqtt-validation.mjs",
+    "check:ws": "node scripts/check-ws-validation.mjs",
+    "check:device": "node scripts/check-device-validation.mjs",
+    "check:errorcode": "node scripts/check-errorcode-validation.mjs",
+    "check:save": "node scripts/check-save-compare.mjs",
+    "check:docs": "node scripts/check-general-markdown.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

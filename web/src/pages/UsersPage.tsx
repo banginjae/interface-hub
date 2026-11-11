@@ -4,6 +4,7 @@ import { apiRequest, type AccountUser } from "../api";
 import { appConfig } from "../appConfig";
 import { authErrorMessage, useAuth } from "../auth";
 import { usePageChrome } from "../Shell";
+import { useToast } from "../toast";
 
 const emptyForm = {
   employeeNo: "",
@@ -18,6 +19,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<AccountUser[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
+  const toast = useToast();
   usePageChrome("", []);
 
   async function load(token: string) {
@@ -59,11 +61,14 @@ export function UsersPage() {
     setMessage("");
     try {
       await apiRequest("/api/master/users", { method: "POST", token: auth.token, body: form });
+      const created = `${form.name.trim()}(${form.employeeNo.trim()})`;
       setForm(emptyForm);
       await load(auth.token);
+      toast.success(`${created} 계정을 등록했습니다.`);
     } catch (error) {
       setForm((current) => ({ ...current, password: "" }));
       setMessage(authErrorMessage(error));
+      toast.error(`계정을 등록하지 못했습니다. ${authErrorMessage(error)}`);
     }
   }
 
@@ -82,8 +87,10 @@ export function UsersPage() {
         body: { name: user.name, email: user.email, role: user.role, active: false },
       });
       await load(auth.token);
+      toast.success(`${user.name}(${user.employeeNo}) 계정을 비활성화했습니다.`);
     } catch (error) {
       setMessage(authErrorMessage(error));
+      toast.error(`계정을 비활성화하지 못했습니다. ${authErrorMessage(error)}`);
     }
   }
 

@@ -1,9 +1,31 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, apiRequest } from "../api";
 import { authErrorMessage, useAuth } from "../auth";
+import { MemberPicker, type MemberCandidate } from "../project/MemberPicker";
 import { permissionLabel, type ProjectDetail, type ProjectMember } from "../projectTypes";
 import { usePageChrome } from "../Shell";
+import { useToast } from "../toast";
+
+function projectError(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case "MEMBER_ALREADY_EXISTS":
+        return "이미 이 프로젝트의 멤버입니다.";
+      case "NOT_FOUND":
+        return `${fallback} 대상을 찾을 수 없습니다. 화면을 새로고침해 주세요.`;
+      case "PROJECT_VERSION_CONFLICT":
+        return "다른 사용자가 먼저 저장했습니다. 최신 내용을 불러왔으니 다시 확인해 주세요.";
+      case "FORBIDDEN":
+        return `${fallback} 권한이 없습니다.`;
+      case "INVALID_REQUEST":
+        return `${fallback} 입력값을 확인해 주세요.`;
+      default:
+        return `${fallback} ${error.message}`;
+    }
+  }
+  return `${fallback} ${authErrorMessage(error)}`;
+}
 
 export function ProjectDetailPage() {
   const auth = useAuth();
@@ -13,12 +35,15 @@ export function ProjectDetailPage() {
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [employeeNo, setEmployeeNo] = useState("");
+  const [candidate, setCandidate] = useState<MemberCandidate | null>(null);
   const [permission, setPermission] = useState("READ");
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
   const [message, setMessage] = useState("");
   const [denied, setDenied] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const panel = searchParams.get("panel");
+  const location = useLocation();
   const [endpointCount, setEndpointCount] = useState<number | null>(null);
   const [endpoints, setEndpoints] = useState<ApiLink[]>([]);
   const [changes, setChanges] = useState<ChangeLink[]>([]);
@@ -153,6 +178,22 @@ export function ProjectDetailPage() {
     };
   }, [auth.token, project]);
 
+  const loaded = Boolean(project);
+  const scrollTop = Boolean((location.state as { scrollTop?: boolean } | null)?.scrollTop);
+  useEffect(() => {
+    if (!loaded) {
+      return;
+    }
+    const target = location.hash === "#changes" ? "changes" : panel === "members" || panel === "settings" ? "manage" : scrollTop ? "project-top" : null;
+    if (!target) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loaded, location.hash, location.key, panel, scrollTop]);
+
   if (!auth.ready) {
     return <main className="page"><p className="state-panel">확인 중입니다.</p></main>;
   }
@@ -182,10 +223,14 @@ export function ProjectDetailPage() {
 
   async function saveProject(event: FormEvent) {
     event.preventDefault();
-    if (!auth.token || !project) {
+    if (!auth.token || !project || busy) {
       return;
     }
-    setMessage("");
+    if (!title.trim()) {
+      toast.error("프로젝트명을 입력해 주세요.");
+      return;
+    }
+    setBusy(true);
     try {
       await apiRequest(`/api/projects/${project.id}`, {
         method: "PUT",
@@ -193,16 +238,25 @@ export function ProjectDetailPage() {
         body: { version: project.version, title, description, status: project.status },
       });
       await load(auth.token);
+      toast.success("프로젝트 정보를 저장했습니다.");
     } catch (error) {
-      setMessage(authErrorMessage(error));
+      toast.error(projectError(error, "프로젝트 정보를 저장하지 못했습니다."));
+      if (error instanceof ApiError && error.code === "PROJECT_VERSION_CONFLICT") {
+        await load(auth.token).catch(() => undefined);
+      }
+    } finally {
+      setBusy(false);
     }
   }
 
   async function setStatus(status: "ACTIVE" | "ARCHIVED") {
-    if (!auth.token || !project) {
+    if (!auth.token || !project || busy) {
       return;
     }
-    setMessage("");
+    if (status === "ARCHIVED" && !window.confirm("프로젝트를 보관할까요? 보관하면 복구하기 전까지 규격과 문서를 수정할 수 없습니다.")) {
+      return;
+    }
+    setBusy(true);
     try {
       await apiRequest(`/api/projects/${project.id}`, {
         method: "PUT",
@@ -210,36 +264,46 @@ export function ProjectDetailPage() {
         body: { version: project.version, title: project.title, description: project.description, status },
       });
       await load(auth.token);
+      toast.success(status === "ARCHIVED" ? "프로젝트를 보관했습니다." : "프로젝트를 복구했습니다.");
     } catch (error) {
-      setMessage(authErrorMessage(error));
+      toast.error(projectError(error, status === "ARCHIVED" ? "프로젝트를 보관하지 못했습니다." : "프로젝트를 복구하지 못했습니다."));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function addMember(event: FormEvent) {
     event.preventDefault();
-    if (!auth.token || !project) {
+    if (!auth.token || !project || busy) {
       return;
     }
-    setMessage("");
+    if (!candidate) {
+      toast.error("추가할 사용자를 이름이나 사번으로 검색해 선택해 주세요.");
+      return;
+    }
+    setBusy(true);
     try {
       await apiRequest(`/api/projects/${project.id}/members`, {
         method: "POST",
         token: auth.token,
-        body: { employeeNo, permission },
+        body: { employeeNo: candidate.employeeNo, permission },
       });
-      setEmployeeNo("");
+      setCandidate(null);
       setPermission("READ");
       await load(auth.token);
+      toast.success(`${candidate.name}(${candidate.employeeNo}) 님을 ${permissionLabel(permission)} 권한으로 추가했습니다.`);
     } catch (error) {
-      setMessage(authErrorMessage(error));
+      toast.error(projectError(error, "멤버를 추가하지 못했습니다."));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function changeMember(member: ProjectMember, next: string) {
-    if (!auth.token || !project) {
+    if (!auth.token || !project || busy) {
       return;
     }
-    setMessage("");
+    setBusy(true);
     try {
       await apiRequest(`/api/projects/${project.id}/members/${member.userId}`, {
         method: "PUT",
@@ -247,27 +311,33 @@ export function ProjectDetailPage() {
         body: { permission: next },
       });
       await load(auth.token);
+      toast.success(`${member.name} 님의 권한을 ${permissionLabel(next)}(으)로 변경했습니다.`);
     } catch (error) {
-      setMessage(authErrorMessage(error));
+      toast.error(projectError(error, "권한을 변경하지 못했습니다."));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function removeMember(member: ProjectMember) {
-    if (!auth.token || !project) {
+    if (!auth.token || !project || busy) {
       return;
     }
-    if (!window.confirm("이 멤버의 권한을 회수할까요?")) {
+    if (!window.confirm(`${member.name} 님의 프로젝트 권한을 회수할까요?`)) {
       return;
     }
-    setMessage("");
+    setBusy(true);
     try {
       await apiRequest(`/api/projects/${project.id}/members/${member.userId}`, {
         method: "DELETE",
         token: auth.token,
       });
       await load(auth.token);
+      toast.success(`${member.name} 님의 권한을 회수했습니다.`);
     } catch (error) {
-      setMessage(authErrorMessage(error));
+      toast.error(projectError(error, "권한을 회수하지 못했습니다."));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -283,12 +353,12 @@ export function ProjectDetailPage() {
       {project.status === "ARCHIVED" ? (
         <p className="banner warning">보관된 프로젝트입니다. 수정하려면 생성자 또는 MASTER가 복구해야 합니다.</p>
       ) : null}
-      <div className="home-head">
+      <div className="home-head" id="project-top">
         <div>
           <h1>{project.title}</h1>
           <p className="lede">{project.description || "설명이 없습니다."}</p>
           <div className="home-badges">
-            <span className={active ? "badge success" : "badge"}>{active ? "활성" : "보관"}</span>
+            <span className={active ? "badge status-badge success" : "badge status-badge"}>{active ? "활성" : "보관"}</span>
             <span className={project.myPermission === "WRITE" ? "badge info" : "badge"}>{permissionLabel(project.myPermission)}</span>
             <span>규격 {project.specSummaries.filter((item) => item.exists).length}종</span>
             <span>문서 {project.generalDocumentCount}</span>
@@ -319,7 +389,7 @@ export function ProjectDetailPage() {
               <div className="resume-empty">
                 <p>{apiSpec?.exists ? (endpointCount === null ? "Endpoint를 확인하는 중입니다." : "아직 등록된 Endpoint가 없습니다.") : "아직 REST API 문서가 없습니다."}</p>
                 {canEditSpec && !(apiSpec?.exists && endpointCount === null) ? (
-                  <Link className="btn primary" to={`/projects/${project.id}/specs/api`}>{apiSpec?.exists ? "첫 Endpoint 작성" : "규격 작성 시작"}</Link>
+                  <Link className="btn primary" to={`/projects/${project.id}/specs/api${apiSpec?.exists ? "?item=new" : ""}`}>{apiSpec?.exists ? "첫 Endpoint 작성" : "규격 작성 시작"}</Link>
                 ) : null}
               </div>
             ) : null}
@@ -376,10 +446,10 @@ export function ProjectDetailPage() {
           </div>
         </div>
       </section>
-      <section className="home-manage">
+      <section className="home-manage" id="manage">
       <h2 className="section-title">프로젝트 관리</h2>
       <div className="tabs" role="tablist">
-        {canManage ? <button type="button" role="tab" aria-selected={panel === "settings"} onClick={() => setSearchParams(panel === "settings" ? {} : { panel: "settings" })}>기본 정보</button> : null}
+        {canManage ? <button type="button" role="tab" aria-selected={panel === "settings"} onClick={() => setSearchParams(panel === "settings" ? {} : { panel: "settings" })}>프로젝트 설정</button> : null}
         <button type="button" role="tab" aria-selected={panel === "members"} onClick={() => setSearchParams(panel === "members" ? {} : { panel: "members" })}>멤버</button>
       </div>
       {panel === "settings" && canManage && active ? (
@@ -394,7 +464,7 @@ export function ProjectDetailPage() {
             <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} />
           </label>
           <div className="form-actions">
-            <button type="submit">저장</button>
+            <button type="submit" disabled={busy}>{busy ? "저장 중" : "저장"}</button>
           </div>
         </form>
       ) : null}
@@ -434,22 +504,24 @@ export function ProjectDetailPage() {
               </tbody>
             </table>
           </div>
-          {canManage && active ? (
+          {canManage && active && auth.token ? (
             <form onSubmit={addMember}>
               <h2>멤버 추가</h2>
-              <label>
-                사번
-                <input value={employeeNo} onChange={(event) => setEmployeeNo(event.target.value)} />
-              </label>
-              <label>
-                권한
-                <select value={permission} onChange={(event) => setPermission(event.target.value)}>
-                  <option value="READ">조회</option>
-                  <option value="WRITE">편집</option>
-                </select>
-              </label>
-              <div className="form-actions">
-                <button type="submit">추가</button>
+              <div className="member-add">
+                <label>
+                  사용자
+                  <MemberPicker projectId={project.id} token={auth.token} value={candidate} onChange={setCandidate} />
+                </label>
+                <label>
+                  권한
+                  <select value={permission} onChange={(event) => setPermission(event.target.value)}>
+                    <option value="READ">조회</option>
+                    <option value="WRITE">편집</option>
+                  </select>
+                </label>
+                <div className="form-actions">
+                  <button type="submit" disabled={busy || !candidate}>{busy ? "처리 중" : "추가"}</button>
+                </div>
               </div>
             </form>
           ) : null}
@@ -490,30 +562,18 @@ function formatWhen(value: string) {
   return new Intl.DateTimeFormat("ko-KR", sameDay ? { hour: "2-digit", minute: "2-digit" } : { month: "numeric", day: "numeric" }).format(date);
 }
 
-type GeneralDocSummary = { department: string };
+type GeneralDocSummary = { title: string; updatedAt: string; updatedBy?: { name: string } };
 
 function generalDocText(docs: GeneralDocSummary[] | null) {
   if (!docs) {
     return "문서 수를 확인하지 못했습니다.";
   }
   if (docs.length === 0) {
-    return "아직 일반 문서가 없습니다. 프로젝트마다 여러 문서를 둘 수 있습니다.";
+    return "아직 일반 문서가 없습니다. Markdown을 직접 작성하거나 .md 파일을 가져와 등록할 수 있습니다.";
   }
-  const order = ["SW", "APP", "FW", "GW", "HW"];
-  const counts = new Map<string, number>();
-  for (const doc of docs) {
-    const key = doc.department.trim() || "부서 없음";
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  const names = Array.from(counts.keys()).sort((left, right) => {
-    const leftIndex = order.indexOf(left);
-    const rightIndex = order.indexOf(right);
-    if (leftIndex === -1 && rightIndex === -1) return left.localeCompare(right, "ko");
-    if (leftIndex === -1) return 1;
-    if (rightIndex === -1) return -1;
-    return leftIndex - rightIndex;
-  });
-  return `${docs.length}개 · ${names.map((name) => `${name} ${counts.get(name)}`).join(" · ")}`;
+  const latest = docs[0];
+  const who = latest.updatedBy?.name ? ` · ${latest.updatedBy.name}` : "";
+  return `${docs.length}개 · 최근 수정 '${latest.title}' ${formatWhen(latest.updatedAt)}${who}`;
 }
 
 function apiSpecText(
@@ -543,7 +603,7 @@ function apiAction(
     return <Link className="btn primary" to={to}>규격 작성 시작</Link>;
   }
   if (endpointCount === 0 && canEdit) {
-    return <Link className="btn primary" to={to}>첫 Endpoint 작성</Link>;
+    return <Link className="btn primary" to={`${to}?item=new`}>첫 Endpoint 작성</Link>;
   }
   return <Link className="btn" to={to}>{canEdit ? "열기" : "보기"}</Link>;
 }

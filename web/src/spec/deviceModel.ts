@@ -1,10 +1,29 @@
-import { blankField, buildExample, errorCodeIdsOf, fieldFromApi, type FieldNode, type SpecDocument, type SpecItem } from "./specModel";
+import { blankField, errorCodeIdsOf, fieldFromApi, type ExampleDraft, type FieldNode, type SpecDocument, type SpecItem } from "./specModel";
 
 export const transports = ["TCP", "UDP", "UART", "RS485", "OTHER"];
 export const deviceDirections = [
-  { value: "REQUEST", label: "요청" },
-  { value: "RESPONSE", label: "응답" },
-  { value: "EVENT", label: "이벤트" },
+  { value: "REQUEST", label: "요청", hint: "상대 장비에 동작이나 데이터를 요청하는 패킷입니다." },
+  { value: "RESPONSE", label: "응답", hint: "요청을 처리한 결과로 돌려주는 패킷입니다. 같은 Command ID의 요청과 대응 명령으로 연결할 수 있습니다." },
+  { value: "EVENT", label: "이벤트", hint: "요청 없이 장비가 상태 변화를 알리는 패킷입니다." },
+];
+
+export const encodings = ["UINT8", "UINT16", "UINT32", "INT8", "INT16", "INT32", "BYTES", "ASCII", "UTF8", "BCD", "BITFIELD"];
+
+export const commandIdExamples = ["0x01", "0x03", "0x0B", "0x10"];
+
+export const deviceTerms = [
+  { term: "Command ID", text: "패킷이 어떤 명령인지 구분하는 값입니다. 0x03처럼 16진수로 적는 경우가 많습니다." },
+  { term: "Packet", text: "한 번에 주고받는 바이트 묶음입니다. 헤더, 데이터, 체크섬 등으로 구성됩니다." },
+  { term: "Byte", text: "8비트(0x00~0xFF) 단위입니다. 필드 길이는 보통 바이트 수로 적습니다." },
+  { term: "Offset", text: "패킷 시작에서 몇 번째 바이트부터 이 필드가 시작하는지입니다. 0부터 셉니다." },
+  { term: "Length", text: "필드가 차지하는 바이트 수입니다." },
+  { term: "Endian", text: "2바이트 이상 숫자를 어떤 순서로 적는지입니다." },
+  { term: "Little / Big Endian", text: "Little은 낮은 자리 바이트를 먼저(0x1234 → 34 12), Big은 높은 자리 바이트를 먼저(12 34) 적습니다." },
+  { term: "HEX", text: "바이트를 16진수 두 자리씩 적은 표기입니다. 예: 02 03 00 10" },
+  { term: "Checksum", text: "전송 오류를 찾으려고 다른 바이트로 계산해 붙이는 값입니다. 계산 방식은 장비마다 다릅니다." },
+  { term: "Fixed / Variable", text: "Fixed는 길이가 항상 같은 필드, Variable은 다른 값(예: 데이터 길이 필드)에 따라 길이가 바뀌는 필드입니다." },
+  { term: "Request / Response", text: "요청 패킷과 그에 대한 응답 패킷입니다. 이 문서에서는 각각 별도 명령으로 등록하고 연결합니다." },
+  { term: "Payload / ExtraData", text: "헤더 뒤에 붙는 실제 데이터 부분입니다. 길이가 바뀌면 가변(Variable)으로 적습니다." },
 ];
 
 export type DeviceOverviewDraft = {
@@ -33,7 +52,7 @@ export type DeviceDraft = {
 
 export function blankDevice(): DeviceDraft {
   return {
-    name: "새 명령", summary: "", status: "ACTIVE", commandId: "", direction: "REQUEST",
+    name: "", summary: "", status: "ACTIVE", commandId: "", direction: "REQUEST",
     description: "", fields: [], exampleHex: "", exampleMode: "AUTO", manualText: "",
     relatedItemUid: "", errorCodeIds: [], changeReason: "",
   };
@@ -89,36 +108,62 @@ export function deviceToPayload(draft: DeviceDraft) {
   };
 }
 
-export function deviceError(draft: DeviceDraft) {
-  if (!draft.name.trim() || !draft.commandId.trim() || !draft.changeReason.trim()) {
-    return "명령 이름, Command ID, 변경 사유를 입력하세요.";
-  }
-  const overlap = overlappingFields(draft.fields);
-  if (overlap.length > 0) {
-    return `FIXED 구간이 겹칩니다: ${overlap.join(", ")}`;
-  }
-  if (draft.exampleMode === "AUTO") {
-    try {
-      buildExample(draft.fields);
-    } catch (error) {
-      return error instanceof Error ? error.message : "예시를 해석할 수 없습니다.";
+export function blankByteField() {
+  return { ...blankField(""), type: "bytes" };
+}
+
+export function exampleDraftOf(draft: DeviceDraft): ExampleDraft {
+  return { fields: draft.fields, exampleMode: draft.exampleMode, manualText: draft.manualText };
+}
+
+export type LayoutSummary = { fixedSum: number; variable: string[]; unknown: number; complete: boolean };
+
+export function layoutSummary(fields: FieldNode[]): LayoutSummary {
+  let fixedSum = 0;
+  const variable: string[] = [];
+  let unknown = 0;
+  for (const field of fields) {
+    const mode = field.lengthMode.trim().toUpperCase();
+    const length = Number(field.byteLength.trim());
+    if (mode === "FIXED" && field.byteLength.trim() && Number.isInteger(length) && length > 0) {
+      fixedSum += length;
+    } else if (mode === "VARIABLE") {
+      variable.push(field.name.trim() || "이름 없는 필드");
+    } else {
+      unknown += 1;
     }
-  } else {
-    try {
-      const parsed = JSON.parse(draft.manualText);
-      if (typeof parsed === "string" || parsed === null || Array.isArray(parsed)) {
-        return "해석 JSON은 객체여야 합니다.";
+  }
+  return { fixedSum, variable, unknown, complete: unknown === 0 && variable.length === 0 };
+}
+
+export function fillOffsets(fields: FieldNode[]) {
+  let cursor = 0;
+  let filled = 0;
+  const next = fields.slice();
+  for (let index = 0; index < next.length; index += 1) {
+    const field = next[index];
+    const mode = field.lengthMode.trim().toUpperCase();
+    const length = Number(field.byteLength.trim());
+    if (mode === "FIXED" && field.byteLength.trim() && Number.isInteger(length) && length > 0) {
+      const offset = field.byteOffset.trim();
+      if (!offset) {
+        next[index] = { ...field, byteOffset: String(cursor) };
+        filled += 1;
+        cursor += length;
+      } else if (/^\d+$/.test(offset)) {
+        cursor = Number(offset) + length;
+      } else {
+        break;
       }
-    } catch {
-      return "해석 JSON 형식이 올바르지 않습니다.";
+      continue;
     }
+    if (mode === "VARIABLE" && !field.byteOffset.trim()) {
+      next[index] = { ...field, byteOffset: String(cursor) };
+      filled += 1;
+    }
+    break;
   }
-  try {
-    deviceToPayload(draft);
-  } catch (error) {
-    return error instanceof Error ? error.message : "명령을 해석할 수 없습니다.";
-  }
-  return "";
+  return { fields: next, filled };
 }
 
 function optionalNumber(value: string) {
@@ -182,67 +227,10 @@ export function overlappingFields(fields: FieldNode[]) {
   return [...names];
 }
 
-export function fixedByteSum(fields: FieldNode[]) {
-  let sum = 0;
-  const walk = (nodes: FieldNode[]) => {
-    for (const field of nodes) {
-      if (field.lengthMode === "FIXED" && field.byteLength.trim() && Number(field.byteLength) > 0) {
-        sum += Number(field.byteLength);
-      }
-      if (field.type === "object") walk(field.children);
-      if (field.type === "array" && field.arrayItem) walk([field.arrayItem]);
-    }
-  };
-  walk(fields);
-  return sum;
-}
-
 export function hexByteCount(hex: string) {
   const compact = hex.replace(/\s+/g, "");
   if (!compact) return 0;
   return compact.length / 2;
-}
-
-export function layoutRows(fields: FieldNode[]) {
-  const rows: Array<{ path: string; offset: string; length: string; type: string; endian: string; encoding: string; range: string }> = [];
-  const walk = (nodes: FieldNode[], prefix: string) => {
-    for (const field of nodes) {
-      const path = prefix ? `${prefix}.${field.name.trim()}` : field.name.trim();
-      const encoding = field.encoding === "BITFIELD" && field.bitOffset && field.bitLength
-        ? `BITFIELD bit ${field.bitOffset} len ${field.bitLength}`
-        : field.encoding || "—";
-      const offset = field.byteOffset.trim();
-      const length = field.byteLength.trim();
-      let range = "위치 없음";
-      if (offset && length && Number(length) > 0) {
-        const start = Number(offset);
-        range = `${start}–${start + Number(length) - 1}`;
-      } else if (field.lengthMode === "VARIABLE") {
-        range = offset ? `${offset}부터 가변` : "가변";
-      }
-      if (field.lengthMode || offset || length) {
-        rows.push({
-          path: path || "필드",
-          offset: offset || "—",
-          length: field.lengthMode === "VARIABLE" ? "가변" : length || "—",
-          type: field.type,
-          endian: field.endian || "기본값",
-          encoding,
-          range,
-        });
-      }
-      if (field.type === "object") walk(field.children, path);
-      if (field.type === "array" && field.arrayItem) walk([field.arrayItem], `${path}[]`);
-    }
-  };
-  walk(fields, "");
-  return rows.sort((left, right) => {
-    const leftOffset = Number(left.offset);
-    const rightOffset = Number(right.offset);
-    if (Number.isNaN(leftOffset)) return 1;
-    if (Number.isNaN(rightOffset)) return -1;
-    return leftOffset - rightOffset;
-  });
 }
 
 export { blankField };

@@ -15,7 +15,10 @@ var (
 	ErrProjectForbidden = errors.New("project forbidden")
 	ErrProjectArchived  = errors.New("project archived")
 	ErrCreatorLocked    = errors.New("creator permission locked")
+	ErrMemberInactive   = errors.New("member account inactive")
 )
+
+const memberCandidateLimit = 20
 
 type VersionConflictError struct {
 	Current uint
@@ -33,6 +36,7 @@ type ProjectStore interface {
 	ListMembers(ctx context.Context, projectID uint64) ([]model.MemberRecord, error)
 	FindMember(ctx context.Context, projectID, userID uint64) (model.ProjectMember, error)
 	AddMember(ctx context.Context, member model.ProjectMember) error
+	MemberCandidates(ctx context.Context, projectID uint64, query string, limit int) ([]model.MemberCandidate, error)
 	UpdateMember(ctx context.Context, member model.ProjectMember) error
 	DeleteMember(ctx context.Context, projectID, userID uint64) error
 }
@@ -180,7 +184,7 @@ func (s *ProjectService) AddMember(ctx context.Context, actor model.User, projec
 		return model.MemberRecord{}, err
 	}
 	if !user.Active {
-		return model.MemberRecord{}, ErrProjectInvalid
+		return model.MemberRecord{}, ErrMemberInactive
 	}
 	now := s.now()
 	err = s.projects.AddMember(ctx, model.ProjectMember{
@@ -201,6 +205,21 @@ func (s *ProjectService) AddMember(ctx context.Context, actor model.User, projec
 		Permission: permission,
 		Active:     user.Active,
 	}, nil
+}
+
+func (s *ProjectService) MemberCandidates(ctx context.Context, actor model.User, projectID uint64, query string) ([]model.MemberCandidate, error) {
+	project, err := s.editableAdmin(ctx, actor, projectID)
+	if err != nil {
+		return nil, err
+	}
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return []model.MemberCandidate{}, nil
+	}
+	if utf8.RuneCountInString(query) > 50 {
+		return nil, ErrProjectInvalid
+	}
+	return s.projects.MemberCandidates(ctx, project.ID, query, memberCandidateLimit)
 }
 
 func (s *ProjectService) UpdateMember(ctx context.Context, actor model.User, projectID, userID uint64, permission string) (model.MemberRecord, error) {

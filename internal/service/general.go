@@ -210,7 +210,11 @@ func cleanGeneral(write GeneralWrite, requireVersion bool) (string, string, stri
 	if requireVersion && write.Version == 0 {
 		return "", "", "", "", ErrProjectInvalid
 	}
-	reason, err := cleanReason(write.ChangeReason)
+	clean := cleanReason
+	if requireVersion {
+		clean = cleanUpdateReason
+	}
+	reason, err := clean(write.ChangeReason)
 	if err != nil {
 		return "", "", "", "", err
 	}
@@ -235,6 +239,9 @@ func mapGeneralErr(err error) error {
 	}
 	if errors.Is(err, model.ErrArchived) {
 		return ErrProjectArchived
+	}
+	if errors.Is(err, model.ErrSpecInput) {
+		return ErrProjectInvalid
 	}
 	return err
 }

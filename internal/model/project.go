@@ -20,6 +20,12 @@ type MemberRecord struct {
 	Active     bool
 }
 
+type MemberCandidate struct {
+	UserID     uint64
+	EmployeeNo string
+	Name       string
+}
+
 const (
 	ProjectActive   = "ACTIVE"
 	ProjectArchived = "ARCHIVED"

@@ -193,11 +193,11 @@ export function blankResponse(status = "200"): ResponseDraft {
 
 export function blankItem(): ItemDraft {
   return {
-    name: "새 Endpoint",
+    name: "",
     summary: "",
     status: "ACTIVE",
     method: "POST",
-    path: "/resources",
+    path: "",
     description: "",
     authType: "NONE",
     authDescription: "",
@@ -442,102 +442,6 @@ function matchValue(field: FieldNode, value: unknown): string | null {
     return null;
   }
   return `${fieldLabel(field)}의 타입이 맞지 않습니다.`;
-}
-
-function fieldError(field: FieldNode, depth: number, siblings: Set<string>): string | null {
-  const name = field.name.trim();
-  if (!name || name.includes(".") || /\s/.test(name)) {
-    return "필드 이름은 비울 수 없고 공백이나 점을 넣을 수 없습니다.";
-  }
-  if (siblings.has(name)) {
-    return `같은 단계에 ${name} 필드가 중복되었습니다.`;
-  }
-  siblings.add(name);
-  if (depth > 8) {
-    return "필드 중첩은 8단까지입니다.";
-  }
-  if (!fieldTypes.includes(field.type)) {
-    return "지원하지 않는 필드 타입입니다.";
-  }
-  if (field.type === "object" && field.arrayItem) {
-    return "object 필드에는 배열 요소를 둘 수 없습니다.";
-  }
-  if (field.type === "array" && field.children.length > 0) {
-    return "array 필드에는 하위 필드 목록 대신 배열 요소를 사용합니다.";
-  }
-  if (field.type === "enum" && enumValues(field.enumText).length === 0) {
-    return `${name}의 enum 값을 입력하세요.`;
-  }
-  if (field.type === "object") {
-    return fieldsError(field.children, depth + 1);
-  }
-  if (field.type === "array") {
-    return field.arrayItem ? fieldError(field.arrayItem, depth + 1, new Set()) : "배열 요소가 없습니다.";
-  }
-  return null;
-}
-
-function fieldsError(fields: FieldNode[], depth: number) {
-  const names = new Set<string>();
-  for (const field of fields) {
-    const found = fieldError(field, depth, names);
-    if (found) {
-      return found;
-    }
-  }
-  return null;
-}
-
-function exampleError(example: ExampleDraft, label: string) {
-  const structure = fieldsError(example.fields, 1);
-  if (structure) {
-    return structure;
-  }
-  if (example.exampleMode === "AUTO") {
-    try {
-      buildExample(example.fields);
-    } catch (error) {
-      return error instanceof Error ? error.message : `${label} 예시를 만들지 못했습니다.`;
-    }
-    return null;
-  }
-  const manual = manualError(example.fields, example.manualText);
-  return manual ? `${label}: ${manual}` : null;
-}
-
-export function itemError(draft: ItemDraft) {
-  if (!draft.name.trim() || !draft.changeReason.trim()) {
-    return "Endpoint 이름과 변경 사유를 입력하세요.";
-  }
-  if (!draft.path.startsWith("/") || /\s/.test(draft.path)) {
-    return "경로는 /로 시작하고 공백이 없어야 합니다.";
-  }
-  const lists = [
-    fieldsError(draft.headers, 1),
-    fieldsError(draft.pathParams, 1),
-    fieldsError(draft.queryParams, 1),
-    exampleError(draft.requestBody, "Request"),
-  ];
-  for (const found of lists) {
-    if (found) {
-      return found;
-    }
-  }
-  const statuses = new Set<string>();
-  for (const response of draft.responses) {
-    if (!response.name.trim() || !/^\d{3}$/.test(response.status)) {
-      return "Response 이름과 상태 코드를 확인하세요.";
-    }
-    if (statuses.has(response.status)) {
-      return "같은 상태 코드가 두 번 있습니다.";
-    }
-    statuses.add(response.status);
-    const found = exampleError(response, `Response ${response.status}`);
-    if (found) {
-      return found;
-    }
-  }
-  return null;
 }
 
 function exampleFields(example: ExampleDraft) {

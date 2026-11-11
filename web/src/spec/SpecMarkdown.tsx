@@ -1,9 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../api";
 import { authErrorMessage } from "../auth";
+import { renderMarkdown } from "../docs/markdownPreview";
 
-export function SpecMarkdown({ projectId, token, version, kind = "API" }: { projectId: string; token: string; version: number; kind?: string }) {
+export function SpecMarkdown({
+  projectId,
+  token,
+  version,
+  kind = "API",
+  rendered = false,
+}: {
+  projectId: string;
+  token: string;
+  version: number;
+  kind?: string;
+  rendered?: boolean;
+}) {
   const [text, setText] = useState("");
+  const [mode, setMode] = useState<"preview" | "source">("preview");
+  const html = useMemo(() => (rendered ? renderMarkdown(text, { rich: true }) : ""), [rendered, text]);
   const [filename, setFilename] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -98,6 +113,27 @@ function download() {
   }
   if (!text) {
     return <p className="banner danger">{message || "Markdown이 없습니다."}</p>;
+  }
+  if (rendered) {
+    return (
+      <section className="md-screen">
+        <div className="md-toolbar">
+          <div className="seg-tabs" role="tablist" aria-label="Markdown 보기 방식">
+            <button type="button" role="tab" aria-selected={mode === "preview"} onClick={() => setMode("preview")}>미리보기</button>
+            <button type="button" role="tab" aria-selected={mode === "source"} onClick={() => setMode("source")}>Markdown 원본</button>
+          </div>
+          <span className="md-meta">{filename} · 문서 버전 v{version} · 마지막 저장본 기준 (편집 중인 내용은 포함되지 않습니다)</span>
+          <div className="md-actions">
+            <button type="button" className="btn" onClick={() => void copyText()}>Markdown 복사</button>
+            <button type="button" className="btn" onClick={download}>파일 다운로드</button>
+          </div>
+        </div>
+        {message ? <p className={message.includes("못했습니다") || message.includes("받지") ? "banner danger" : "banner success"}>{message}</p> : null}
+        {mode === "preview"
+          ? <article className="md-preview" dangerouslySetInnerHTML={{ __html: html }} />
+          : <pre className="md-source">{text}</pre>}
+      </section>
+    );
   }
   return (
     <section className="markdown-screen">

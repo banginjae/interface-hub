@@ -1,0 +1,822 @@
+[
+  {
+    "name": "minimum: Command ID and name only",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "reference packet: 16 fixed bytes + variable ExtraData",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Start",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "Ag==",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 0,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "Command",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "3",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 1,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": "UINT8",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "ErrorCode",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "0",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 2,
+          "byteLength": 2,
+          "endian": "LITTLE",
+          "encoding": "UINT16",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "Param1",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "1",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 4,
+          "byteLength": 2,
+          "endian": "LITTLE",
+          "encoding": "UINT16",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "Param2",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "0",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 6,
+          "byteLength": 2,
+          "endian": "LITTLE",
+          "encoding": "UINT16",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "Param3",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "0",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 8,
+          "byteLength": 4,
+          "endian": "LITTLE",
+          "encoding": "UINT32",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "ExtraDataLength",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "0",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 12,
+          "byteLength": 2,
+          "endian": "LITTLE",
+          "encoding": "UINT16",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "HeaderChecksum",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "90",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 14,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": "UINT8",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "ExtraDataChecksum",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "0",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 15,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": "UINT8",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "ExtraData",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 16,
+          "byteLength": null,
+          "endian": null,
+          "encoding": "BYTES",
+          "lengthMode": "VARIABLE",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "02 03 00 00 01 00 00 00 00 00 00 00 00 00 5A 00",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "fields without any byte layout",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Param1",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": null,
+          "byteLength": null,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": null,
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "Note",
+          "type": "string",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": null,
+          "byteLength": null,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": null,
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "FIXED with endian but position not decided yet",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Param1",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": null,
+          "byteLength": null,
+          "endian": "LITTLE",
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "BITFIELD inside one byte",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Flags",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "1",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 3,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": "BITFIELD",
+          "lengthMode": "FIXED",
+          "bitOffset": 0,
+          "bitLength": 1
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "VARIABLE with offset only",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "ExtraData",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 16,
+          "byteLength": null,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "VARIABLE",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "HEX with spaces and lowercase",
+    "valid": true,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "02 03 0a",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "length without offset",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Param1",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": null,
+          "byteLength": 2,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "offset without length",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Param1",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 4,
+          "byteLength": null,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "overlapping FIXED ranges",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "A",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 0,
+          "byteLength": 2,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        },
+        {
+          "name": "B",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 1,
+          "byteLength": 2,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "zero length",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "A",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 0,
+          "byteLength": 0,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "negative offset",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "A",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": -1,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "BITFIELD wider than the field",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Flags",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "1",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 0,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": "BITFIELD",
+          "lengthMode": "FIXED",
+          "bitOffset": 0,
+          "bitLength": 9
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "BITFIELD without bit range",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Flags",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "1",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 0,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": "BITFIELD",
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "odd HEX digits",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "02 0",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "HEX with line break",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "02 03\n00",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "HEX with non-hex character",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "02 0G",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "empty Command ID",
+    "valid": false,
+    "payload": {
+      "commandId": "",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "Command ID with tab",
+    "valid": false,
+    "payload": {
+      "commandId": "0x\t03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "integer field without example",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Command",
+          "type": "integer",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": 0,
+          "byteLength": 1,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": "FIXED",
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "blank field name",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "",
+          "type": "bytes",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": null,
+          "byteLength": null,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": null,
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "AUTO",
+      "exampleJson": null,
+      "relatedItemUid": null
+    }
+  },
+  {
+    "name": "interpreted JSON with undefined key",
+    "valid": false,
+    "payload": {
+      "commandId": "0x03",
+      "direction": "REQUEST",
+      "description": "",
+      "fields": [
+        {
+          "name": "Param1",
+          "type": "string",
+          "required": true,
+          "nullable": false,
+          "description": "",
+          "example": "a",
+          "format": "",
+          "enum": [],
+          "children": [],
+          "arrayItem": null,
+          "byteOffset": null,
+          "byteLength": null,
+          "endian": null,
+          "encoding": null,
+          "lengthMode": null,
+          "bitOffset": null,
+          "bitLength": null
+        }
+      ],
+      "exampleHex": "",
+      "exampleMode": "MANUAL",
+      "exampleJson": {
+        "Param1": "a",
+        "extra": 1
+      },
+      "relatedItemUid": null
+    }
+  }
+]
